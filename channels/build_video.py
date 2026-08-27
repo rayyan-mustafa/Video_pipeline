@@ -35,7 +35,7 @@ import scipy.signal as sps
 import soundfile as sf
 
 sys.path.insert(0, str(Path(__file__).parent))
-from pipeline import imageplan
+from pipeline import imageplan, pacing
 from pipeline.align import align, anchor_report
 from pipeline.scenesplit import make_scenes
 from pipeline.project import Project
@@ -434,16 +434,28 @@ def check_images(proj, images_dir: Path, wpm: int) -> None:
         if n_img == 0:
             flag = "  <- NO IMAGES"
             problems.append(f"section {sec} has no images at all")
-        elif hold < 1.5:
+        elif hold < pacing.MIN_HOLD:
+            flag = "  <- flashes"
+        elif hold > pacing.HARD_MAX:
+            flag = f"  <- over {pacing.HARD_MAX:.0f}s"
+        elif hold < pacing.TARGET_LOW:
             flag = "  <- very fast"
-        elif hold > 15.0:
-            flag = "  <- very slow"
         print(f"  {sec:>3} {n_sc:>7} {n_img:>7} {w:>6} "
               f"{span:>8.0f}s {hold:>8.1f}s{flag}")
 
     holds = [words.get(s, 0) / wpm * 60.0 / counts[s] for s in counts if counts[s]]
     if holds:
-        print(f"\n  overall ~{est_total / len(images):.1f}s per image")
+        # Per-image estimate, not per-section, so it is comparable with the
+        # channel's target band. Section averages hide a section that holds one
+        # picture for 15s behind another that cuts every second.
+        per_image = [words.get(s, 0) / wpm * 60.0 / counts[s]
+                     for s in counts if counts[s] for _ in range(counts[s])]
+        v = pacing.verdict(per_image)
+        print(f"\n  overall ~{est_total / len(images):.1f}s per image   "
+              f"[{v['rating']}]")
+        print(f"  {v['note']}")
+        if v["rating"] in ("slow", "too slow"):
+            problems.append(v["note"])
         if max(holds) > 2.5 * min(holds):
             problems.append(
                 f"pacing is uneven - the slowest section holds {max(holds):.1f}s "

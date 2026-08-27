@@ -40,7 +40,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from pipeline.project import Project
-from pipeline import imageplan
+from pipeline import imageplan, pacing
 from pipeline.scenesplit import counts as split_counts, make_scenes, match_scenes
 
 # 150 wpm is the read sheets' own assumption (see sections/README.txt), so image
@@ -186,7 +186,14 @@ def main() -> None:
                          "sentence; dash also splits on a spaced em-dash. Use "
                          "sentence or dash when the pictures were commissioned "
                          "one per sentence.")
-    ap.add_argument("--seconds-per-image", type=float, default=8.0)
+    ap.add_argument("--seconds-per-image", type=float,
+                    default=pacing.DEFAULT_SECONDS_PER_IMAGE,
+                    help=f"target hold per picture. Default "
+                         f"{pacing.DEFAULT_SECONDS_PER_IMAGE:.1f}s is the midpoint "
+                         f"of the channel's {pacing.TARGET_LOW:.0f}-"
+                         f"{pacing.TARGET_HIGH:.0f}s fast-cut band; nothing should "
+                         f"exceed {pacing.HARD_MAX:.0f}s. The old 8.0s default was "
+                         f"not a decision, just an untested guess.")
     ap.add_argument("--wpm", type=int, default=DEFAULT_WPM)
     ap.add_argument("--topic", default=None,
                     help="what the whole video is about, e.g. 'the human chin'. "

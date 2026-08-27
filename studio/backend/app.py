@@ -19,11 +19,11 @@ from __future__ import annotations
 import mimetypes
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Body, FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 
-from . import jobs, paths, projects
+from . import assets, jobs, paths, planning, projects, scripts
 
 app = FastAPI(title="Video Studio", version="0.1.0")
 
@@ -63,6 +63,15 @@ def api_projects() -> list[dict]:
 def api_create_project(channel: str = Query(...), topic: str = Query(...)) -> dict:
     try:
         return projects.create(channel, topic)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+def _proj(channel: str, topic: str):
+    """Resolve a project or 400. Every project route starts here, so a bad id
+    fails the same way everywhere instead of raising a bare ValueError."""
+    try:
+        return projects.get(f"{channel}/{topic}")
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
 
@@ -121,6 +130,68 @@ def api_file(path: str = Query(..., description="absolute path inside the repo")
 
     media, _ = mimetypes.guess_type(p.name)
     return FileResponse(p, media_type=media or "application/octet-stream")
+
+
+# ---------------------------------------------------------------------------
+#  Script
+# ---------------------------------------------------------------------------
+@app.get("/api/projects/{channel}/{topic}/script")
+def api_script(channel: str, topic: str, wpm: int = 150) -> dict:
+    return scripts.analyse(_proj(channel, topic), wpm=wpm)
+
+
+@app.put("/api/projects/{channel}/{topic}/script")
+async def api_save_script(channel: str, topic: str, body: dict = Body(...)) -> dict:
+    text = body.get("text")
+    if not isinstance(text, str):
+        raise HTTPException(400, "body must be {\"text\": \"...\"}")
+    return scripts.write(_proj(channel, topic), text)
+
+
+# ---------------------------------------------------------------------------
+#  Plan
+# ---------------------------------------------------------------------------
+@app.get("/api/projects/{channel}/{topic}/plan")
+def api_plan(channel: str, topic: str) -> dict:
+    plan = planning.read(_proj(channel, topic))
+    if plan is None:
+        raise HTTPException(404, "no plan yet - run planning first")
+    return plan
+
+
+@app.post("/api/projects/{channel}/{topic}/plan")
+async def api_run_plan(channel: str, topic: str, body: dict = Body(default={})) -> dict:
+    proj = _proj(channel, topic)
+    pid = f"{channel}/{topic}"
+    if jobs.registry.running(pid, "plan"):
+        raise HTTPException(409, "a plan is already running for this project")
+    job = await planning.run(
+        proj,
+        split=body.get("split", "match"),
+        seconds_per_image=body.get("seconds_per_image"),
+        topic=body.get("topic"),
+        allow_brackets=bool(body.get("allow_brackets")),
+    )
+    return job.as_dict()
+
+
+# ---------------------------------------------------------------------------
+#  Images
+# ---------------------------------------------------------------------------
+@app.get("/api/projects/{channel}/{topic}/images")
+def api_images(channel: str, topic: str) -> dict:
+    return assets.scan(_proj(channel, topic))
+
+
+@app.get("/api/projects/{channel}/{topic}/images/pacing")
+def api_image_pacing(channel: str, topic: str, wpm: int = 150) -> dict:
+    return assets.pacing_table(_proj(channel, topic), wpm=wpm)
+
+
+@app.post("/api/projects/{channel}/{topic}/images")
+async def api_upload_images(channel: str, topic: str,
+                            files: list[UploadFile] = File(...)) -> dict:
+    return await assets.upload(_proj(channel, topic), files)
 
 
 # ---------------------------------------------------------------------------
