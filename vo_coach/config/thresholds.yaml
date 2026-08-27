@@ -1,0 +1,414 @@
+# =============================================================================
+#  Coaching thresholds
+# =============================================================================
+#  These get retuned constantly once real recordings come in. Nothing in
+#  src/ should hard-code any number that belongs here.
+#
+#  THE TWO NUMBERS THAT MATTER MOST are `silence` and `must_fix` in each block.
+#  Below `silence`  -> the coach says nothing.
+#  Above `must_fix` -> the coach always flags it.
+#  Between them     -> logged and shown on the HUD, but never spoken aloud.
+#  The width of that gap IS the coach's personality. Widen it for a calmer
+#  coach, narrow it for a stricter one.
+# =============================================================================
+
+pacing:
+  # Starting point from general US VO norms. Item 5 of the dev-tooling list says
+  # this should drift toward the user's own baseline once calibration exists -
+  # see `baseline.enabled` below.
+  target_wpm_min: 140
+  target_wpm_max: 170
+  # A single fast sentence is fine and human. Sustained drift is the problem.
+  sustained_sentences_before_flag: 2
+  silence_wpm_margin: 10      # within 10 wpm of the band -> say nothing
+  must_fix_wpm_margin: 25     # more than 25 wpm outside the band -> always flag
+
+proximity_effect:
+  # Fifine A6V is a budget cardioid condenser: close work builds low end fast.
+  # Measured as spectral tilt in dB/octave; more negative = more bass buildup.
+  silence_tilt: -3.0
+  must_fix_tilt: -6.0
+
+sibilance:
+  # Energy in the ~5-9 kHz band relative to overall level.
+  band_hz_low: 5000
+  band_hz_high: 9000
+  silence_peak_db: 6.0
+  must_fix_peak_db: 12.0
+
+noise:
+  # The A6V has audible self-noise. Below this SNR, hiss starts masking words.
+  silence_snr_db: 30.0
+  must_fix_snr_db: 20.0
+
+pronunciation:
+  # ASR confidence below this + a phoneme mismatch = probable mispronunciation.
+  # Confidence alone is too noisy to use on its own.
+  min_word_confidence: 0.55
+  require_phoneme_mismatch: true
+
+pitch:
+  # Explicitly stylistic per the rubric - narrow range is never a must-fix.
+  # Kept here only so the HUD can show it.
+  flag_range_hz_below: 40.0
+
+pauses:
+  # A pause not aligned to punctuation, longer than this, reads as hesitation.
+  unaligned_pause_sec: 0.6
+
+# =============================================================================
+#  NICHES
+# =============================================================================
+#  One block per channel/niche. A take is benchmarked only against its OWN
+#  niche's reference - these are separate channels in separate languages, and
+#  cross-comparing them would be meaningless.
+#
+#  `wpm_from_reference: true` derives the pacing target from the reference voice
+#  instead of the global 140-170 band. That band is a US-English VO norm and
+#  does not transfer to Bengali, where syllable structure and speaking-rate
+#  conventions differ. Deriving the target from a voice that is actually
+#  succeeding in that niche is the honest way to set it.
+# =============================================================================
+niches:
+  zenn:
+    language: en
+    # Upgraded from base.en: on this lossy YouTube rip base.en dropped most of
+    # the speech, yielding an impossible 43 wpm and a 5.8 s mean pause on a
+    # clip that is visibly dense continuous narration. The smaller checkpoints
+    # degrade badly on compressed audio - they do not error, they just return
+    # far fewer words, and every pacing number computed from that is wrong.
+    asr_model: small.en
+    reference: data/references/zenn/competitor.wav
+    reference_name: zenn_competitor
+    provenance: youtube_rip     # lossy - see `excluded_from_benchmark` below
+    wpm_from_reference: false   # US-English niche: the global band applies
+    # Verified: median word duration ~0.3 s and stable word counts across runs.
+    asr_word_timestamps_reliable: true
+
+  movie_explainer:
+    language: en
+    asr_model: small.en
+    reference: data/references/movie_explainer/competitor.wav
+    reference_name: movie_explainer_competitor
+    provenance: youtube_rip
+
+    # Replaced a Bengali reference whose word timestamps were unusable: the same
+    # clip returned 33-94 words and 34-89 wpm across identical runs, so every
+    # timing metric had to be suppressed. English is deterministic on this model
+    # (188 words / 188.1 wpm, bit-identical across runs), so this niche gets the
+    # full metric set back - pacing and pause coaching included.
+    asr_word_timestamps_reliable: true
+
+    # This niche is a fast, dense breakdown style rather than measured
+    # narration, so the US-English 140-170 band is likely too slow a target.
+    # Derive it from the reference instead.
+    wpm_from_reference: true
+
+# Metrics never compared against a reference, with the reason. Kept in config
+# so the exclusion is visible rather than buried in code.
+excluded_from_benchmark:
+  noise_floor_db: "reference is a lossy YouTube rip; its noise floor measures
+    the codec and the uploader's room, not a target worth matching"
+  snr_db: "same - the zenn reference measures 14.4 dB SNR, below this config's
+    own must-fix threshold of 20 dB. Benchmarking hiss against it would coach
+    toward a worse recording."
+  pitch_mean_hz: "vocal identity, not delivery. Matching another speaker's
+    pitch means changing your voice, which is not what this coach is for."
+
+# =============================================================================
+#  MENTOR (Phase 3)
+# =============================================================================
+#  PROVIDER IS PLUGGABLE. `openrouter` and `anthropic` both implement the same
+#  interface, so switching is this file, not code.
+#
+#  THE DECIDING FACTOR IS LATENCY, NOT PRICE. Phase 5 coaches at clause
+#  boundaries, where a five-second reply arrives well after the moment it was
+#  about - worse than useless, because the speaker has already moved on. Every
+#  number below is therefore quoted as a ROUND TRIP for a ~400-token reply:
+#  time-to-first-token + tokens/throughput.
+#
+#  Measured 2026-08-22 from OpenRouter model pages and the
+#  /api/v1/models/<slug>/endpoints API:
+#
+#    model / host                       price in/out   tps   TTFT   400-tok
+#    gpt-oss-120b @ cerebras/fp16       $0.35/$0.75    970   0.22s   0.63s  <- default
+#    gpt-oss-120b @ groq                $0.15/$0.60    330   0.23s   1.44s  <- backup
+#    ling-3.0-flash @ novita/fast       $0.042/$0.126  391   0.67s   1.69s
+#    deepseek-v4-flash @ baidu          $0.069/$0.137  ~84   n/a     ~4.9s
+#    claude-sonnet-5                    $3.00/$15.00   varies
+#
+#  Cost per coaching call (~2.3k in, ~400 out):
+#    gpt-oss-120b @ cerebras  ~$0.0011      gpt-oss-120b @ groq  ~$0.00059
+#    ling-3.0-flash           ~$0.00015     claude-sonnet-5      ~$0.0086
+#
+#  WHY gpt-oss-120b RATHER THAN LING. It is both FASTER (0.63s vs 1.69s) and a
+#  genuinely stronger reasoner - it is trained for reasoning with configurable
+#  effort, where Ling is a plain fast chat model. Coaching is a judgment task
+#  ("is this a real fault or just how they sound"), which is exactly where the
+#  weaker model was expected to fail first. The cost is ~7x Ling, which at this
+#  volume is cents per month.
+#
+#  Ling remains a good fallback and is one line away; see the block below.
+# =============================================================================
+mentor:
+  provider: openrouter      # openrouter | anthropic
+  model: openai/gpt-oss-120b
+
+  max_tokens: 8000
+
+  # ---------------------------------------------------------------------------
+  #  REASONING EFFORT - READ THIS BEFORE RAISING IT
+  # ---------------------------------------------------------------------------
+  #  A reasoning model bills and TIMES its chain-of-thought as output tokens,
+  #  and those tokens never appear in the reply. At high effort this model can
+  #  emit more thinking than coaching, which silently turns a 0.63s call into
+  #  several seconds and multiplies the cost - with nothing in the text to
+  #  explain either.
+  #
+  #  `low` is right here. The hard thinking already happened in Phase 1-2: the
+  #  model is handed pre-classified findings and asked to choose three and
+  #  explain them to a person. That is a writing task with a judgment step, not
+  #  a problem to solve from scratch.
+  #
+  #  Raise to `medium` only if `mentor-audit` shows it breaking rules - and
+  #  re-check the round-trip time afterwards, because `reasoning_tokens` in the
+  #  call meta is what tells you the real cost of that change.
+  openrouter_reasoning_effort: low
+
+  # ---------------------------------------------------------------------------
+  #  HOST PINNING IS MANDATORY, NOT AN OPTIMIZATION
+  # ---------------------------------------------------------------------------
+  #  18 hosts serve gpt-oss-120b, from $0.03/$0.17 to $0.35/$0.95, at speeds
+  #  from ~114 to 970 tok/s. Unpinned, OpenRouter may route anywhere, with
+  #  nothing in the response to say it happened. The cheapest host here is NOT
+  #  the one to want: CoreWeave at $0.03/$0.17 is 8x cheaper than Cerebras and
+  #  nowhere near its speed, and speed is what this project is buying.
+  #
+  #  TWO HOSTS, IN ORDER, WITH FALLBACKS OFF. Cerebras first for speed; Groq
+  #  second because it is also sub-1.5s and cheaper. `allow_fallbacks: false`
+  #  keeps routing inside this list, so an outage fails over to Groq but never
+  #  to a slow or expensive host chosen for us.
+  #
+  #  SLUGS ARE VERIFIED against openrouter.ai/api/v1/models/openai/gpt-oss-120b
+  #  /endpoints - not guessed from display names. USE THAT ENDPOINT whenever
+  #  changing a pin: the display name and the routing slug are different
+  #  strings, and this config previously carried `novita/fp8` for Ling when the
+  #  real slug is `novita/fast`. With fallbacks off, a wrong slug is a hard
+  #  failure on the first real call.
+  openrouter_providers: ["cerebras/fp16", "groq"]
+  openrouter_allow_fallbacks: false
+
+  # ---------------------------------------------------------------------------
+  #  Alternatives, measured. Swap the two lines above.
+  # ---------------------------------------------------------------------------
+  #  model: inclusionai/ling-3.0-flash   providers: ["novita/fast"]
+  #    $0.042/$0.126, 391 tps, 0.67s TTFT -> 1.69s. Cheapest by 7x and no
+  #    reasoning tokens to budget for. Not a reasoning model, so this is the
+  #    one to compare against on `mentor-audit` if cost ever matters.
+  #    Other verified slugs: `novita` (half price, 39 tps - ten times slower,
+  #    do not), `deepinfra/bf16` ($0.06/$0.18, 211 tps, 0.36s TTFT - the best
+  #    choice for PHASE 5, where replies are ~20-50 tokens and time-to-first-
+  #    token dominates throughput).
+  #
+  #  model: deepseek/deepseek-v4-flash-0731   providers: ["baidu"]
+  #    $0.069/$0.137, ~84 tps -> ~4.9s. 13B active parameters. Too slow for
+  #    Phase 5 at any reply length; kept here only as a reasoning comparison.
+  #
+  #  model: claude-sonnet-5                provider: anthropic
+  #    ~$0.0086/call, roughly 8x the default. The escalation of last resort,
+  #    and the natural model to run as the LLM judge rather than as the coach.
+  #
+  #  REJECTED, with the numbers (checked 2026-08-22). All fail the <=1s budget:
+  #
+  #    model                    price in/out   tps   TTFT   400-tok reply
+  #    gemini-3.1-flash-lite    $0.25/$1.50     79   0.55s   5.61s
+  #    gemini-3.5-flash-lite    $0.30/$2.50     64   0.55s   6.80s
+  #    glm-5.3                  $1.40/$4.40     36   2.74s  13.85s
+  #
+  #  GLM 5.3 is also single-provider (Z.ai only): no host to pin, and no second
+  #  source if it degrades.
+
+  # Anthropic-only knobs; ignored by other providers.
+  thinking: adaptive        # adaptive | off
+  effort: medium            # low | medium | high | xhigh | max
+
+  max_fixes: 3              # spec: at most 3 prioritized fixes per take
+
+  # Dev-tooling item 2: cache responses on disk, keyed by a hash of the input.
+  # Iterating on prompt wording or on Phase 1-4 logic re-runs the mentor
+  # constantly; without this every run is a paid API call for an answer that has
+  # not changed.
+  cache_responses: true
+
+  # Check every reply against the system prompt's own hard rules and log the
+  # per-model failure rate (`vo-coach mentor-audit`). This is what makes "is
+  # this cheap model good enough" a measurement instead of an impression - keep
+  # it on. Costs nothing: no API call, pure regex over text already in memory.
+  validate: true
+
+  # Never call the API at all - return the cached response or fail. Use while
+  # working on downstream code so a loop cannot quietly spend money.
+  offline: false
+
+# -----------------------------------------------------------------------------
+#  Personal baseline (dev-tooling item 5)
+# -----------------------------------------------------------------------------
+#  Once calibration takes exist, scoring becomes partly relative to the user's
+#  own natural range instead of a pure absolute rubric - otherwise the coach
+#  flags things that are just how they normally sound.
+#
+#  THIS IS NOT A REFINEMENT. Every absolute number in the `pacing` and
+#  `pronunciation` blocks above came from US-English VO norms, and this project's
+#  user is a Pakistani English speaker. Two concrete misfires without it:
+#
+#    pacing 140-170 wpm            - a US-VO convention, not a law of
+#                                    intelligibility. A clear read at 132 gets
+#                                    called dragging.
+#    min_word_confidence 0.55      - Whisper is less certain on accents further
+#                                    from its training data, so the flag fires
+#                                    on the ACCENT rather than on the
+#                                    pronunciation. That is the rubric
+#                                    penalising how someone sounds.
+#
+#  Build it with:  python -m vo_coach calibrate <take_id> <take_id> <take_id>
+#  using three natural, well-recorded takes. Calibration REFUSES clipped or
+#  hissy takes - a baseline built from a bad recording makes the fault normal.
+baseline:
+  enabled: false            # flip on after `vo-coach calibrate`
+  path: data/baseline.json
+  # How far to trust the personal baseline vs the absolute rubric. 0.0 = pure
+  # rubric, 1.0 = pure personal. Start low and raise it as takes accumulate.
+  #
+  # Never set this to 1.0. A pure personal baseline normalises real faults -
+  # "you always rush, therefore rushing is fine" - which is the opposite failure
+  # to the one above and just as useless. The blend is the point.
+  weight: 0.3
+
+# -----------------------------------------------------------------------------
+#  Mastering (Phase 4)
+# -----------------------------------------------------------------------------
+mastering:
+  # NOTE: open decision #1 in the spec - confirm before shipping Phase 4.
+  # -16 LUFS is the podcast/VO delivery norm; -14 is streaming-platform norm.
+  target_lufs: -16.0
+  true_peak_ceiling_db: -1.0
+  highpass_hz: 80           # proximity correction
+  deesser_freq_hz: 6500
+  compressor_ratio: 3.0
+  compressor_threshold_db: -18.0
+
+# =============================================================================
+#  LIVE MODE (Phase 5)
+# =============================================================================
+#  Live coaching is gated on CLAUSE BOUNDARIES: a note that lands mid-sentence
+#  derails the read, so the speaker has to start the line again. Everything
+#  here is about deciding when it is safe to speak, and how rarely.
+# =============================================================================
+live:
+  buffer_sec: 30            # ring buffer; older audio is overwritten
+  metric_window_sec: 4.0    # window the HUD numbers are measured over
+  hud_hz: 4.0               # HUD refresh rate
+
+  # --- clause detection -------------------------------------------------
+  #  Both minimums matter, for different reasons:
+  #    min_speech  - without it, a cough between two silences reads as a clause
+  #                  and the coach interrupts someone who has not spoken yet.
+  #    min_silence - without it, every inter-word gap is a boundary and
+  #                  coaching fires several times a second.
+  #  Raise min_silence if the coach interrupts mid-sentence; raise min_speech
+  #  if it reacts to noises rather than to lines.
+  min_speech_sec: 0.7
+  # The wait you feel after finishing a sentence before anything appears. This
+  # is a floor on responsiveness and cannot be removed - the clause is not over
+  # until the silence proves it is. Lower it for a snappier HUD, at the cost of
+  # splitting sentences at natural mid-line pauses.
+  min_silence_sec: 0.35
+  # dB above the ROLLING noise floor to count as speech. Adaptive rather than a
+  # fixed dBFS: a fixed threshold works in one room at one gain and silently
+  # fails everywhere else - and this coach actively tells the user to change
+  # mic distance, which moves the floor.
+  speech_gate_db: 10.0
+
+  # ---------------------------------------------------------------------------
+  #  LIVE ASR IS BEST-EFFORT AND IS ALLOWED TO FALL BEHIND
+  # ---------------------------------------------------------------------------
+  #  MEASURED ON THIS MACHINE: base.en transcribes a 2 s clause in ~3.9 s on
+  #  CPU. That is SLOWER THAN SPEECH. No amount of tuning fixes that - without
+  #  a GPU, live transcription cannot keep up with continuous reading, and any
+  #  design that pretends otherwise just accumulates lag until the HUD is
+  #  captioning something from minutes ago.
+  #
+  #  So the transcript is explicitly NOT on the critical path. Coaching and the
+  #  clause list never wait for it (see live/session.py `_handle_boundary`), and
+  #  when the transcriber falls behind, pending clauses are DROPPED rather than
+  #  queued - the HUD marks them and moves on. The saved take gets a proper
+  #  transcript from `analyze` afterwards, where there is no clock to race.
+  #
+  #  `tiny.en` is the faster option if you want more clauses captioned live and
+  #  can accept worse text. Set --no-asr to turn it off entirely, which also
+  #  frees the CPU the meters are competing for.
+  asr_model: base.en
+
+  # How many un-transcribed clauses may wait before the oldest are dropped.
+  # MUST STAY SMALL. This is what bounds lag: with a deep queue the transcriber
+  # never catches up, it just falls further behind while looking busy.
+  asr_max_pending: 2
+
+  # ---------------------------------------------------------------------------
+  #  WHICH FAULTS STOP A TAKE
+  # ---------------------------------------------------------------------------
+  #  With a script loaded, the teleprompter holds on a line until a take of it
+  #  is accepted. ONLY THESE METRICS BLOCK. Everything else is still coached
+  #  and still shown on the HUD, but the line is accepted and the reader moves
+  #  on.
+  #
+  #  Keep this list short, and keep it to things MASTERING CANNOT FIX. When it
+  #  contained everything must_fix, a real session measured 51 sibilants per
+  #  minute against a 30 threshold - so the reader was stuck on line one
+  #  indefinitely for something the de-esser removes automatically two steps
+  #  later. A coach that stops the take for a fault the pipeline repairs is
+  #  worse than one that misses it.
+  #
+  #  clipping qualifies: the waveform is flat-topped and no processing brings
+  #  it back. Sibilance, proximity and pacing do not.
+  blocking_metrics: ["clipping"]
+
+  # Runs of full-scale samples inside the metric window before the HUD calls it
+  # clipping. NOT one sample: a single half-millisecond tick on a plosive lit
+  # the red light for four seconds and failed the line with it.
+  clip_runs_to_flag: 3
+
+  # --- coach throttling -------------------------------------------------
+  #  THIS IS THE FEATURE, NOT AN OPTIMIZATION. Three limits, three failure
+  #  modes:
+  #    cooldown  - stops the coach talking over itself
+  #    budget    - bounds spend for one session, decided before it starts
+  #    repeat    - stops the same note being said twice, which is how a coach
+  #                gets ignored. This is the one that actually matters.
+  coach_cooldown_sec: 20.0
+  coach_budget: 40          # max mentor calls per session
+  repeat_after_sec: 90.0    # do not raise the same metric again within this
+
+  # ---------------------------------------------------------------------------
+  #  HOST PIN FOR LIVE - different from Phase 3, deliberately
+  # ---------------------------------------------------------------------------
+  #  Phase 3 replies are ~400 tokens, where THROUGHPUT dominates and Cerebras
+  #  wins. Live replies are one sentence, ~20-50 tokens, where TIME-TO-FIRST-
+  #  TOKEN dominates instead. Measured round trips for a 40-token reply:
+  #
+  #    baseten/fp4    0.20s + 40/299  ->  0.33s
+  #    cerebras/fp16  0.22s + 40/970  ->  0.26s
+  #    groq           0.23s + 40/330  ->  0.35s
+  #
+  #  Cerebras still wins at this length because its throughput is so high that
+  #  its slightly worse first-token time never catches up. So the Phase 3 pin
+  #  DOES carry over - but it was measured, not assumed, and if the model
+  #  changes this arithmetic has to be redone.
+  #
+  #  There is no separate pin key here: live uses `mentor.*`. Add one only if a
+  #  measurement ever says the two phases want different hosts.
+
+audio:
+  sample_rate: 48000
+  bit_depth: 16
+  channels: 1

@@ -1,0 +1,59 @@
+# =============================================================================
+#  PYTHON 3.12 ONLY.
+# =============================================================================
+#  Not 3.13, not 3.14. parselmouth, pedalboard and the CTranslate2 backend
+#  behind faster-whisper all ship compiled wheels, and those wheels lag new
+#  Python releases by months. On 3.14 pip falls back to building from source
+#  and fails on a missing C++ toolchain - a confusing error that looks like a
+#  code problem but is not.
+#
+#  Create the venv explicitly:   py -3.12 -m venv .venv
+# =============================================================================
+
+# --- core -------------------------------------------------------------------
+pydantic==2.12.4          # the AnalysisResult contract + validation
+PyYAML==6.0.3             # thresholds.yaml
+numpy==2.2.6              # pinned <2.3: parselmouth wheels are built against 2.x
+
+# --- audio io ---------------------------------------------------------------
+soundfile==0.13.1
+sounddevice==0.5.2        # mic capture (PortAudio)
+
+# --- analysis (Phase 1) -----------------------------------------------------
+librosa==0.11.0           # spectral tilt, RMS, onsets
+praat-parselmouth==0.4.7  # F0 / formants - more accurate than librosa's pitch
+silero-vad==6.2.1         # speech/silence boundaries
+faster-whisper==1.2.1     # local ASR, no per-call cost
+
+# --- mastering (Phase 4) ----------------------------------------------------
+pedalboard==0.9.24        # EQ / compressor / de-esser chain
+noisereduce==3.0.3
+pyloudnorm==0.2.0         # LUFS normalization
+
+# --- mentor (Phase 3) -------------------------------------------------------
+anthropic==0.75.0
+
+# --- live mode (Phase 5) ----------------------------------------------------
+fastapi==0.115.6          # HUD + WebSocket state stream
+uvicorn[standard]>=0.52.4 # ASGI server; [standard] pulls the websockets impl
+# uvicorn 0.34 could not drive websockets>=14 (it used the legacy API that
+# release removed), so the WS upgrade was refused with a bare 403. Keep uvicorn
+# recent rather than pinning websockets back.
+# NOTE: no browser-side audio library. Live audio is captured by the Python
+# process through sounddevice, the same path `record()` uses - see the note at
+# the top of src/vo_coach/live/session.py for why that is not negotiable.
+
+# --- dev tooling ------------------------------------------------------------
+pytest==8.4.2
+matplotlib==3.10.7        # debug plots (dev-tooling item 3)
+
+# =============================================================================
+#  DELIBERATELY NOT PINNED HERE
+# =============================================================================
+#  whisperx  - pulls its own torch build and frequently conflicts with the
+#              faster-whisper/CTranslate2 pairing above. Phase 1 works without
+#              it (faster-whisper already returns word timestamps); add it only
+#              when phoneme-level scoring actually starts, in its own venv if
+#              the resolver fights.
+#  torch     - installed as a whisperx/silero dependency; pin it to a specific
+#              CUDA or CPU build for the target machine rather than here.

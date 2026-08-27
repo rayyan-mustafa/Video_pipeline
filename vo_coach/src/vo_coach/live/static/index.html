@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vo-coach live</title>
+<style>
+  /* Self-contained on purpose: no CDN, no fonts to fetch. This page has to
+     come up instantly on a machine that may be offline mid-session. */
+  :root{
+    --bg:#0e1013; --panel:#161a20; --line:#242a33;
+    --text:#e6e9ee; --dim:#8b95a5;
+    --ok:#4ec9a4; --warn:#e0b341; --bad:#e06c5b; --accent:#6ea8fe;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+       font:15px/1.5 ui-sans-serif,system-ui,"Segoe UI",Roboto,sans-serif}
+  header{display:flex;align-items:center;gap:16px;padding:14px 20px;
+         border-bottom:1px solid var(--line)}
+  h1{font-size:15px;margin:0;font-weight:600;letter-spacing:.02em}
+  .clock{font-variant-numeric:tabular-nums;color:var(--dim)}
+  .spacer{flex:1}
+  button{background:var(--panel);color:var(--text);border:1px solid var(--line);
+         padding:7px 14px;border-radius:7px;cursor:pointer;font:inherit}
+  button:hover{border-color:var(--accent)}
+  main{display:grid;grid-template-columns:minmax(280px,1fr) 2fr;gap:16px;
+       padding:16px;max-width:1100px;margin:0 auto}
+  @media(max-width:820px){main{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+         padding:14px}
+  .panel h2{font-size:11px;text-transform:uppercase;letter-spacing:.09em;
+            color:var(--dim);margin:0 0 12px;font-weight:600}
+  .metric{display:flex;justify-content:space-between;align-items:baseline;
+          padding:7px 0;border-bottom:1px solid var(--line)}
+  .metric:last-child{border-bottom:0}
+  .metric .k{color:var(--dim);font-size:13px}
+  .metric .v{font-variant-numeric:tabular-nums;font-size:16px}
+  .v.ok{color:var(--ok)} .v.warn{color:var(--warn)} .v.bad{color:var(--bad)}
+  /* Level meter. The clip segment is its own colour band rather than a
+     threshold on the same bar: "how loud" and "you have destroyed the
+     waveform" are different questions and must not share a scale. */
+  .meter{height:10px;background:#0a0c0f;border-radius:5px;overflow:hidden;
+         margin:6px 0 14px;border:1px solid var(--line)}
+  .meter i{display:block;height:100%;width:0;background:var(--ok);
+           transition:width .08s linear}
+  .meter i.warn{background:var(--warn)} .meter i.bad{background:var(--bad)}
+  .note{padding:11px 13px;border-radius:8px;background:#1b2029;
+        border-left:3px solid var(--accent);margin-bottom:9px}
+  .note.rubric{border-left-color:var(--dim)}
+  .note .t{color:var(--dim);font-size:11px;font-variant-numeric:tabular-nums}
+  .clause{padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .clause:last-child{border-bottom:0}
+  .clause .m{color:var(--dim);font-size:11px;font-variant-numeric:tabular-nums}
+  .empty{color:var(--dim);font-size:13px;font-style:italic}
+  .pend{color:var(--dim);font-style:italic}
+  /* Teleprompter. The CURRENT line is the only one at full contrast: a
+     prompter that shows everything equally makes the reader hunt for their
+     place, which is exactly the thing it exists to prevent. */
+  .pl{padding:5px 0;color:#586173;font-size:15px;line-height:1.55;
+      transition:color .15s}
+  .pl.done{color:#3d4552}
+  .pl.now{color:var(--text);font-size:17px}
+  .pl .mark{color:var(--accent);font-weight:600}
+  .hold{display:inline-block;margin-left:10px;padding:1px 9px;border-radius:11px;
+        background:var(--accent);color:#0e1013;font-size:12px;font-weight:600;
+        font-variant-numeric:tabular-nums}
+  .hold.over{background:var(--warn)}
+  .pl.retake{color:var(--warn)}
+  .tick{color:var(--ok);margin-left:9px;font-weight:700}
+  /* The word that carries the line. Underlined rather than coloured: colour is
+     already doing three jobs on this page, and an underline reads as "lean
+     here" without competing with the pass/fail signalling. */
+  .em{font-weight:700;border-bottom:2px solid var(--accent);padding-bottom:1px}
+  .pl.now .em{border-bottom-color:var(--ok)}
+  .direction{margin:8px 0 4px;padding:9px 12px;border-radius:8px;
+             background:#12212b;color:#b6d8e8;font-size:14px;line-height:1.5}
+  .direction b{color:var(--ok);font-weight:700}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--dim);
+       display:inline-block;margin-right:7px}
+  .dot.live{background:var(--bad);animation:pulse 1.4s infinite}
+  .dot.speaking{background:var(--ok)}
+  @keyframes pulse{50%{opacity:.35}}
+  .err{color:var(--warn);font-size:12px;padding:8px 20px}
+  .foot{color:var(--dim);font-size:12px;padding:0 20px 24px;max-width:1100px;
+        margin:0 auto}
+</style>
+</head>
+<body>
+<header>
+  <span class="dot" id="dot"></span>
+  <h1>vo-coach live</h1>
+  <span class="clock" id="clock">0:00</span>
+  <span class="spacer"></span>
+  <span class="clock" id="budget"></span>
+  <button id="stop">Stop &amp; save take</button>
+</header>
+<div class="err" id="err"></div>
+
+<main>
+  <section>
+    <div class="panel">
+      <h2>Signal</h2>
+      <div class="meter"><i id="bar"></i></div>
+      <div class="metric"><span class="k">Peak</span><span class="v" id="peak">--</span></div>
+      <div class="metric"><span class="k">Level (RMS)</span><span class="v" id="rms">--</span></div>
+      <div class="metric"><span class="k">Signal-to-noise</span><span class="v" id="snr">--</span></div>
+      <div class="metric"><span class="k">Noise floor</span><span class="v" id="nf">--</span></div>
+      <div class="metric"><span class="k">Spectral tilt</span><span class="v" id="tilt">--</span></div>
+      <div class="metric"><span class="k">Sibilants /min</span><span class="v" id="sib">--</span></div>
+      <div class="metric"><span class="k">Speaking rate</span><span class="v" id="wpm">--</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="panel" id="promptPanel" style="margin-bottom:16px;display:none">
+      <h2>Script</h2>
+      <div id="prompt"></div>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <h2>Coaching</h2>
+      <div id="notes"><p class="empty">Nothing to say yet &mdash; that is the
+        normal state. Notes appear between sentences, only when something
+        crosses a must-fix threshold.</p></div>
+    </div>
+    <div class="panel">
+      <h2>Clauses</h2>
+      <div id="clauses"><p class="empty">Waiting for the first clause.</p></div>
+    </div>
+  </section>
+</main>
+
+<p class="foot">Recording to <span id="take">--</span>. Pacing and pause
+coaching are suppressed live: over a single clause they measure one sentence,
+not a delivery. Run <code>analyze</code> on the saved take for those.</p>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = (v, unit, digits=1) =>
+  (v === null || v === undefined) ? "--" : v.toFixed(digits) + (unit || "");
+
+// Thresholds mirror config/thresholds.yaml. They are duplicated here only for
+// COLOUR - the rubric decides what is actually a finding, and this page never
+// decides anything on its own.
+function band(v, good, bad, higherIsBetter) {
+  if (v === null || v === undefined) return "";
+  if (higherIsBetter) return v >= good ? "ok" : (v <= bad ? "bad" : "warn");
+  return v <= good ? "ok" : (v >= bad ? "bad" : "warn");
+}
+function set(id, text, cls) {
+  const el = $(id); el.textContent = text; el.className = "v " + (cls || "");
+}
+
+function render(s) {
+  const m = s.metrics || {};
+  const mins = Math.floor(s.elapsed / 60), secs = Math.floor(s.elapsed % 60);
+  $("clock").textContent = mins + ":" + String(secs).padStart(2, "0");
+  $("take").textContent = s.recording_to || "not saving";
+  $("budget").textContent = (s.coach_budget
+      ? s.coach_calls + " / " + s.coach_budget + " coach calls" : "")
+      + (s.asr_skipped ? "   · " + s.asr_skipped + " clause(s) not transcribed" : "");
+  $("err").textContent = s.error || "";
+  $("dot").className = "dot " + (m.speaking ? "speaking" : "live");
+
+  // Meter: -60..0 dBFS mapped across the bar.
+  const peak = m.peak_db === null || m.peak_db === undefined ? -60 : m.peak_db;
+  const pct = Math.max(0, Math.min(100, (peak + 60) / 60 * 100));
+  const bar = $("bar");
+  bar.style.width = pct + "%";
+  bar.className = m.clipping ? "bad" : (peak > -6 ? "warn" : "");
+
+  set("peak", m.clipping ? "CLIPPING" : fmt(m.peak_db, " dBFS"),
+      m.clipping ? "bad" : band(m.peak_db, -12, -3, false));
+  set("rms", fmt(m.rms_db, " dBFS"));
+  set("snr", fmt(m.snr_db, " dB", 0), band(m.snr_db, 30, 20, true));
+  set("nf", fmt(m.noise_floor_db, " dBFS", 0));
+  set("tilt", fmt(m.tilt_db_per_oct, " dB/oct", 1),
+      band(m.tilt_db_per_oct, -3, -6, false));
+  set("sib", fmt(m.sibilance_per_min, "", 0), band(m.sibilance_per_min, 12, 30, false));
+  set("wpm", fmt(m.wpm, " wpm", 0));
+
+  const notes = s.notes || [];
+  $("notes").innerHTML = notes.length ? notes.slice().reverse().map(n =>
+    '<div class="note ' + (n.kind === "rubric" ? "rubric" : "") + '">' +
+    '<div class="t">' + n.t.toFixed(0) + 's' +
+    (n.meta && n.meta.metric ? ' &middot; ' + n.meta.metric : '') +
+    (n.kind === "rubric" ? ' &middot; local' : '') + '</div>' +
+    escapeHtml(n.text) + '</div>').join("")
+    : '<p class="empty">Nothing to say yet &mdash; that is the normal state.</p>';
+
+  // A clause appears the moment its boundary is detected, before any
+  // transcript exists. The three states are shown differently on purpose:
+  // waiting for words, gave up on words, and done - so a slow transcriber
+  // reads as "still working" rather than as a broken one.
+  const cl = s.clauses || [];
+  updatePrompt(s);
+
+  $("clauses").innerHTML = cl.length ? cl.slice().reverse().map(c => {
+    let body;
+    if (c.pending)      body = '<span class="pend">transcribing…</span>';
+    else if (c.skipped) body = '<span class="pend">(skipped — transcriber '
+                             + 'behind; full text is in the saved take)</span>';
+    else if (c.text)    body = escapeHtml(c.text);
+    else                body = '<span class="pend">(no words detected)</span>';
+    return '<div class="clause"><div class="m">' + c.t_start.toFixed(1) + 's' +
+      (c.words ? ' &middot; ' + c.words + ' words' : '') +
+      (c.wpm ? ' &middot; ' + c.wpm.toFixed(0) + ' wpm' : '') +
+      '</div>' + body + '</div>';
+  }).join("") : '<p class="empty">Waiting for the first clause.</p>';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+// ---------------------------------------------------------------------------
+//  Teleprompter
+// ---------------------------------------------------------------------------
+//  The line you are on is driven by CLAUSE COUNT, not by a timer. A timed
+//  prompter races ahead the moment you pause longer than it expected, and then
+//  the reader is chasing the screen instead of reading. Counting finished
+//  clauses means the script waits for you.
+let SCRIPT = [];
+let lastClauseCount = -1;
+let pauseStartedAt = null;
+let pauseTarget = null;
+
+fetch("/api/script").then(r => r.json()).then(d => {
+  SCRIPT = d.lines || [];
+  if (SCRIPT.length) {
+    $("promptPanel").style.display = "";
+    drawPrompt(0, []);
+  }
+});
+
+function drawPrompt(idx, lines) {
+  lines = lines || [];
+  $("prompt").innerHTML = SCRIPT.map((l, i) => {
+    const st = (lines[i] && lines[i].state) || (i < idx ? "done" : "pending");
+    let cls = i < idx ? "done" : (i === idx ? "now" : "");
+    if (i === idx && st === "retake") cls += " retake";
+    let body = escapeHtml(l.text).replace(/⬚/g,
+      '<span class="mark">&#9646;</span>');
+    // Mark the carrying words. Word-boundary match on the escaped text so a
+    // short word never highlights inside a longer one.
+    (l.emphasis || []).forEach(w => {
+      body = body.replace(new RegExp('\b(' + w + ')\b', 'i'),
+                          '<span class="em">$1</span>');
+    });
+    let badge = "";
+    if (i === idx && st === "retake") {
+      badge = '<span class="hold over">again</span>';
+    } else if (i === idx && l.pause) {
+      badge = '<span class="hold" id="hold">hold ' + l.pause.toFixed(2) + 's</span>';
+    } else if (st === "done") {
+      badge = '<span class="tick">&#10003;</span>';
+    }
+    // The direction sits under the CURRENT line only. Showing it on every line
+    // turns the prompter into a wall of instructions, which is the opposite of
+    // what a prompter is for.
+    const dir = (i === idx && l.note)
+      ? '<div class="direction">' + escapeHtml(l.note).replace(
+          /([A-Z]{2,})/g, '<b>$1</b>') + '</div>'
+      : '';
+    return '<div class="pl ' + cls + '">' + body + badge + dir + '</div>';
+  }).join("");
+}
+
+let lastState = "";
+function updatePrompt(s) {
+  if (!SCRIPT.length) return;
+  if (s.script_done) {
+    $("prompt").innerHTML =
+      '<p class="empty">Script finished &mdash; press Stop &amp; save take.</p>';
+    return;
+  }
+  // THE SERVER OWNS WHICH LINE YOU ARE ON. It advances only when a take of a
+  // line was accepted, so a line the coach objected to stays put and stays lit
+  // rather than scrolling away while you are being asked for it again.
+  const lines = s.lines || [];
+  const idx = Math.min(s.current_line || 0, SCRIPT.length - 1);
+  const st = (lines[idx] && lines[idx].state) || "";
+  if (idx !== lastClauseCount || st !== lastState) {
+    const advanced = idx !== lastClauseCount;
+    lastClauseCount = idx; lastState = st;
+    drawPrompt(idx, lines);
+    if (advanced) {
+      // A line was just accepted, so its pause starts now.
+      const done = SCRIPT[Math.max(0, idx - 1)];
+      pauseTarget = (idx > 0 && done) ? done.pause : null;
+      pauseStartedAt = pauseTarget ? performance.now() : null;
+    }
+  }
+  // Count UP against the target rather than down to zero: overshooting is the
+  // useful information, and a counter that stops at 0.00 hides it.
+  const el = $("hold");
+  if (el && pauseStartedAt && pauseTarget && !s.metrics.speaking) {
+    const held = (performance.now() - pauseStartedAt) / 1000;
+    el.textContent = held.toFixed(2) + "s / " + pauseTarget.toFixed(2) + "s";
+    el.className = "hold" + (held > pauseTarget * 1.35 ? " over" : "");
+  } else if (el && s.metrics.speaking) {
+    pauseStartedAt = null;
+  }
+}
+
+let ws;
+function connect() {
+  ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://")
+                     + location.host + "/ws");
+  ws.onmessage = e => render(JSON.parse(e.data));
+  // Reconnect rather than dying: the session keeps recording even if this tab
+  // drops, so the page must be able to rejoin a take already in progress.
+  ws.onclose = () => setTimeout(connect, 1200);
+}
+connect();
+
+$("stop").onclick = async () => {
+  const r = await fetch("/api/stop", {method: "POST"});
+  const d = await r.json();
+  // The comped file is the deliverable when a script was used; the raw take is
+  // kept beside it and never overwritten, because a comp built from a
+  // misfiring rubric must always be recoverable.
+  $("err").textContent = !d.take_id ? "Stopped."
+    : (d.comped
+        ? "Saved. Approved takes assembled -> " + d.comped
+          + (d.missing ? "   (" + d.missing + " line(s) never accepted)" : "")
+        : "Saved " + d.take_id + " - run:  python -m vo_coach analyze " + d.take_id);
+};
+</script>
+</body>
+</html>

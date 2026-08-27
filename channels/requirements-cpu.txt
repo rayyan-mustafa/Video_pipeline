@@ -1,0 +1,13 @@
+# The local half of the pipeline. Deliberately does NOT contain torch, diffusers,
+# accelerate, bitsandbytes or faster-whisper: those belong to the notebook's GPU
+# half, and pulling them in here is how the split gets lost.
+openai>=1.40                 # the OpenRouter client - OpenAI-compatible API
+numpy>=1.26                  # run_qc.py only. NOT soundfile: pipeline/qc.py parses
+                             # the RIFF chunks itself so the local half stays a
+                             # pure-Python install with one numeric dependency.
+scipy>=1.11                  # pipeline/finish.py's line-weight boost (ndimage
+                             # dilation). CPU-only, not part of the torch/diffusers
+                             # GPU split this file otherwise excludes.
+trafilatura>=1.12
+requests>=2.32
+python-dotenv>=1.0

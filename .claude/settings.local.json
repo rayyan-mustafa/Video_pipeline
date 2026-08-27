@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/Scripts/python.exe -m pytest --version)",
+      "Bash(.venv/Scripts/python.exe -m pytest -q)",
+      "mcp__colab-mcp__get_cells",
+      "mcp__colab-mcp__update_cell",
+      "Bash(python -c ' *)",
+      "Bash(.venv/Scripts/python.exe test_pipeline.py)",
+      "Bash(echo \"=== exit=$? ===\")",
+      "Bash(.venv/Scripts/python.exe -c ' *)",
+      "Bash(awk '/^TOPICS = \\\\{/,/^\\\\}/' pipeline/config.py)",
+      "WebSearch"
+    ]
+  }
+}

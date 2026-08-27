@@ -1,0 +1,19 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# Recorded audio and derived artifacts - large, personal, regenerable.
+data/takes/*.wav
+data/takes/*.json
+data/references/*
+data/cache/*
+data/sessions.db
+data/baseline.json
+!data/**/.gitkeep
+
+# Generated debug plots
+*.png
+!tests/fixtures/**/*.png
+
+.env

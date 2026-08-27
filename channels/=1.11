@@ -1,0 +1,4 @@
+Collecting scipy
+  Downloading scipy-1.18.1-cp314-cp314-win_amd64.whl.metadata (61 kB)
+Requirement already satisfied: numpy<2.8,>=2.0.0 in .\.venv\Lib\site-packages (from scipy) (2.5.2)
+Downloading scipy-1.18.1-cp314-cp314-win_amd64.whl (37.4 MB)

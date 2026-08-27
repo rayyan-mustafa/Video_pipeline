@@ -1,0 +1,44 @@
+    if out:
+        total = float(timeline[-1]["end"])
+
+        # TILE BY CONSTRUCTION, DO NOT TRUST EACH SCENE'S OWN END.
+        #
+        # align() clamps every scene to at least 0.05s long (`ends = maximum(ends,
+        # starts + 0.05)`), so two scenes that anchor within 50ms of each other -
+        # a rushed "Not one." "Ever." - come back with scene i ending AFTER scene
+        # i+1 starts. Taking each image's end from its own last scene then
+        # produced overlapping pictures, a duration sum 0.1s longer than the
+        # audio, and sub-frame holds. Measured on the chin video: 2 overlaps,
+        # 2 flashes, 0.100s of phantom runtime.
+        #
+        # A picture's end is simply where the next one begins. That makes gaps and
+        # overlaps unrepresentable rather than merely unlikely.
+        starts = [e["start"] for e in out]
+
+        # Then enforce a minimum hold, clamping so the tail always has room for
+        # the pictures still to come. A cut moved by a few tens of milliseconds is
+        # invisible; a 2-frame flash is not.
+        n = len(starts)
+        fixed = [0.0] * n
+        prev = 0.0
+        for i, s in enumerate(starts):
+            ceiling = total - (n - i) * MIN_HOLD
+            fixed[i] = min(max(s, prev), max(ceiling, prev))
+            prev = fixed[i] + MIN_HOLD
+
+        for i, e in enumerate(out):
+            a = fixed[i]
+            b = fixed[i + 1] if i + 1 < n else total
+            e["start"] = round(a, 3)
+            e["end"] = round(b, 3)
+            e["duration"] = round(b - a, 3)
+
+        moved = [i for i, (a, b) in enumerate(zip(starts, fixed)) if abs(a - b) > 0.001]
+        if moved:
+            worst = max(abs(starts[i] - fixed[i]) for i in moved)
+            warnings.append(
+                f"{len(moved)} cut(s) nudged to keep every picture at least "
+                f"{MIN_HOLD:.2f}s on screen (largest move {worst:.2f}s). The "
+                f"underlying scenes were read faster than that."
+            )
+

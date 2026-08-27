@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "colab-mcp": {
+      "command": "C:\\Users\\HP\\AppData\\Roaming\\Python\\Python314\\Scripts\\uvx.exe",
+      "args": [
+        "git+https://github.com/googlecolab/colab-mcp"
+      ],
+      "timeout": 600000
+    }
+  }
+}

@@ -1,0 +1,87 @@
+# =============================================================================
+#  SECRETS
+# =============================================================================
+.env
+*.key
+
+# The notebooks hardcode a live HF token in 4 cells each (see NEXT_SESSION.md,
+# "Rotate the token, then point those four cells at the dotenv path"). Git
+# history is permanent, so they stay out until the token is rotated and those
+# cells read from .env like cell 13 already does. Delete these two lines then.
+channels/stickman.ipynb
+channels/stickman.ipynb.bak
+
+# =============================================================================
+#  ENVIRONMENTS
+# =============================================================================
+.venv/
+channels/.venv/
+vo_coach/.venv/
+node_modules/
+
+# =============================================================================
+#  GENERATED MEDIA
+#  Big, regenerable, and not source. The text that produces them IS tracked:
+#  script.txt, sections/*.txt and the plan JSON all stay in the repo.
+# =============================================================================
+*.wav
+*.mp3
+*.m4a
+*.flac
+*.mp4
+*.zip
+
+# Hand-supplied and generated pictures
+channels/*/*/images/
+channels/*/*/voice_recordings/
+
+# Everything under a project's build/ is derived - "delete build/ and re-run"
+# is meant to always be safe, so none of it belongs in version control.
+channels/*/*/build/
+
+# vo_coach recordings, references and its session database
+vo_coach/data/takes/
+vo_coach/data/cache/
+vo_coach/data/references/
+vo_coach/data/sessions.db
+
+# =============================================================================
+#  PIPELINE WORKING OUTPUT
+#  Lives in the Drive folder, not the repo.
+# =============================================================================
+channels/source_cache/
+# Matches at any depth - there is a copy at channels/pipeline/_local_workdir/ too,
+# holding generated prop contact sheets.
+_local_workdir/
+_stages.json
+_fulltest/
+_flat/
+
+# =============================================================================
+#  PYTHON / TOOLING
+# =============================================================================
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.coverage
+htmlcov/
+
+# =============================================================================
+#  FRONTEND
+# =============================================================================
+studio/frontend/dist/
+studio/frontend/.vite/
+studio/backend/settings.json
+*.local
+
+# =============================================================================
+#  EDITOR / OS
+# =============================================================================
+.DS_Store
+Thumbs.db
+.idea/
+*.swp

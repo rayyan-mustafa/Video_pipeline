@@ -1,0 +1,73 @@
+{
+  "clean_baseline": {
+    "file": "clean_baseline.wav",
+    "sample_rate": 48000,
+    "duration_sec": 6.0,
+    "defect": null
+  },
+  "heavy_proximity": {
+    "file": "heavy_proximity.wav",
+    "sample_rate": 48000,
+    "duration_sec": 6.0,
+    "defect": "proximity_effect",
+    "expect": "tilt more negative than baseline"
+  },
+  "harsh_sibilance": {
+    "file": "harsh_sibilance.wav",
+    "sample_rate": 48000,
+    "duration_sec": 6.0,
+    "defect": "sibilance",
+    "expect_peaks_at": [
+      1.0,
+      2.0,
+      4.0,
+      5.5
+    ]
+  },
+  "noisy_snr12": {
+    "file": "noisy_snr12.wav",
+    "sample_rate": 48000,
+    "duration_sec": 6.0,
+    "defect": "noise_floor",
+    "expect_snr_db": 12.0,
+    "tolerance_db": 2.0
+  },
+  "long_pauses": {
+    "file": "long_pauses.wav",
+    "sample_rate": 48000,
+    "duration_sec": 8.0,
+    "defect": "pauses",
+    "expect_pauses_at": [
+      2.0,
+      5.0
+    ],
+    "expect_duration_sec": 1.2
+  },
+  "clipped": {
+    "file": "clipped.wav",
+    "sample_rate": 48000,
+    "duration_sec": 6.0,
+    "defect": "clipping"
+  },
+  "_needs_real_recordings": {
+    "note": "WPM, word stress and mispronunciation need real speech + ASR. Record these on the A6V and label by hand before trusting pacing/pronunciation scoring.",
+    "wanted": [
+      {
+        "name": "too_fast",
+        "expect": "sustained >170 wpm for 3+ sentences"
+      },
+      {
+        "name": "too_slow",
+        "expect": "sustained <140 wpm"
+      },
+      {
+        "name": "mispronounced_word",
+        "expect": "one flagged word, labeled"
+      },
+      {
+        "name": "wrong_syllable_stress",
+        "expect": "one flagged word, labeled"
+      }
+    ]
+  }
+}

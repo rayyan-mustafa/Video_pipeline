@@ -1,0 +1,13 @@
+MARKED SCRIPT
+  pause style   sentence 0.81s / clause 0.31s / paragraph 1.22s  (derived from zenn)
+  [n.nn]        hold this many seconds. Do not fill it with breath.
+
+  76 words -> ~30s speech + 6s pauses = ~36s total
+
+--------------------------------------------------------------------
+Somewhere past the last bright star you can see, [0.31] space stops behaving the way you expect.  [0.81]
+Distance stops being a straight path.  [0.81]
+Time slips, [0.31] stretches, [0.31] and settles into something patient.  [0.81]
+The physicists say the shape of it was set in the first fraction of a second, [0.31] and everything since has simply been consequence.  [0.81]
+Stand still for a moment and consider that.  [0.81]
+The same silence pressing against those distant systems is pressing, [0.31] right now, [0.31] against your skin.

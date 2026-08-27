@@ -1,0 +1,58 @@
+# =============================================================================
+#  VOICE SAMPLES  --  human-written narration the writer should move like
+# =============================================================================
+#  Read by pipeline/humanize.py -> voice_samples(), injected into the writer's
+#  system prompt as "the cadence to match". Empty is fine: the obligations and
+#  quotas in humanize.py work on their own. Samples make them almost unnecessary.
+#
+#  Split samples with a line of three or more dashes. Lines starting with # are
+#  ignored. Aim for 250-1,500 words per sample, 2-6 samples total.
+#
+#  BEFORE YOU PASTE ANYTHING:
+#      python check_voice_sample.py yourfile.txt
+#      python check_voice_sample.py voice_samples.txt --all
+#  It rejects prose that is machine-shaped by the numbers. It cannot check who
+#  wrote it - that part is on you.
+#
+# -----------------------------------------------------------------------------
+#  WHAT QUALIFIES
+# -----------------------------------------------------------------------------
+#  Provenance beats taste. The only hard guarantee that prose is human is that it
+#  was written before a machine could write it. In order of how much they are
+#  worth here:
+#
+#  1. YOU, TALKING. Record yourself explaining something you actually find
+#     interesting for five minutes, unscripted, then transcribe it. This is the
+#     best sample that exists for this channel: guaranteed human, guaranteed
+#     yours, no rights question, and it is your own speaking rhythm - which is
+#     the rhythm you will be reading the finished script in anyway. You already
+#     have the recording half of this: vo_coach records takes, and whisper will
+#     transcribe them.
+#
+#  2. YOUR OWN OLD WRITING. Anything you wrote before 2021. Notes, posts,
+#     emails, essays. It does not need to be about biology or to be good.
+#
+#  3. PRE-2021 NARRATION TRANSCRIPTS from a channel whose voice you want. Pull
+#     captions with yt-dlp --write-auto-sub. The date is what makes it safe. Use
+#     it as a private style reference, the way you would study a director's
+#     blocking - do not reproduce its sentences.
+#
+#  4. PRE-2021 LONGFORM SCIENCE JOURNALISM. Feature writing, not abstracts.
+#
+#  WHAT DOES NOT QUALIFY
+#  ---------------------
+#  - Anything a model wrote, including anything Claude wrote for this project.
+#    A generated sample hands the writer the exact register the humanizer gate
+#    exists to remove, with the gate's own authority behind it.
+#  - Zenn, or any competitor in this niche. Their register is AI-shaped:
+#    vo_coach/data/scripts/mic_test_zenn.txt, written in that voice, runs a
+#    tricolon and a cushion word inside 76 words - about 13x the human rate for
+#    both. And matching a competitor's cadence is how you end up sounding like
+#    the competitor.
+#  - Post-2022 web prose with no known author. Most of it is untraceable now.
+#  - Wikipedia, press releases, abstracts. Human, but the wrong register: no
+#    voice to transfer.
+#
+# -----------------------------------------------------------------------------
+#  Paste below this line.
+# -----------------------------------------------------------------------------
