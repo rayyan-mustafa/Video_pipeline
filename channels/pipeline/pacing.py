@@ -24,16 +24,28 @@ way a static frame is not. So this reports, and the operator decides.
 from __future__ import annotations
 
 # Editorial targets for the channel. Change here, not at call sites.
+#
+# THE BODY BAND: the normal cut rhythm. A new scene every 2-4 seconds.
 TARGET_LOW = 2.0
-TARGET_HIGH = 3.0
+TARGET_HIGH = 4.0
 HARD_MAX = 4.0
 
-# Mirrors imageplan.MIN_HOLD. Duplicated as a named constant rather than imported
-# to keep this module dependency-free, and asserted equal by the tests.
-MIN_HOLD = 0.5
+# THE ACCENT ZONE: 0.5-2.0s. A one-second cut is not a mistake - it is how a
+# specific point in the narration gets emphasised, and the channel uses them
+# deliberately. So a hold below the body band is reported as an accent, not a
+# defect. Only holds under MIN_HOLD are wrong, because those read as a flash
+# rather than as a beat.
+ACCENT_LOW = MIN_HOLD = 0.5
+ACCENT_HIGH = TARGET_LOW
 
-# The planner's default, derived from the band rather than picked.
-DEFAULT_SECONDS_PER_IMAGE = (TARGET_LOW + TARGET_HIGH) / 2.0      # 2.5
+# Roughly what share of a video should be accents. Above this the fast cuts stop
+# reading as emphasis and start reading as the baseline rhythm - at which point
+# nothing is emphasised. Advisory only.
+ACCENT_SHARE_MAX = 0.25
+
+# The planner's default: the middle of the body band. Accents are placed
+# deliberately in the editor, not produced by the planner's even division.
+DEFAULT_SECONDS_PER_IMAGE = (TARGET_LOW + TARGET_HIGH) / 2.0      # 3.0
 
 
 def images_for(audio_seconds: float, target: float = DEFAULT_SECONDS_PER_IMAGE) -> int:
@@ -61,45 +73,67 @@ def verdict(holds: list[float]) -> dict:
     n = len(s)
     avg = sum(s) / n
     median = s[n // 2]
-    over_hard = [h for h in s if h > HARD_MAX]
-    under_min = [h for h in s if h < MIN_HOLD]
 
-    if avg > HARD_MAX:
+    over_hard = [h for h in s if h > HARD_MAX]
+    accents = [h for h in s if ACCENT_LOW <= h < ACCENT_HIGH]
+    flashes = [h for h in s if h < MIN_HOLD]
+    # THE BODY IS EVERYTHING THAT IS NOT AN ACCENT - with no upper bound.
+    # Capping it at HARD_MAX (as this first did) excluded the over-long holds
+    # from their own average, so the chin video scored "on target" on a body mean
+    # of 2.9s while 67 of its 105 pictures sat above four seconds. An average
+    # that ignores the frames you are complaining about measures nothing.
+    body = [h for h in s if h >= ACCENT_HIGH]
+
+    # Judge on the body rather than the raw mean: deliberate one-second accents
+    # pull the mean down, and a video with good 3s pacing plus a healthy scatter
+    # of accents would otherwise be scored "too fast" for doing its job.
+    body_avg = (sum(body) / len(body)) if body else avg
+    accent_share = len(accents) / n
+
+    if body_avg > HARD_MAX:
         rating = "too slow"
-        note = (f"averages {avg:.1f}s - the target band is "
-                f"{TARGET_LOW:.0f}-{TARGET_HIGH:.0f}s. Needs about "
-                f"{images_for(sum(s))} images, not {n}.")
-    elif avg > TARGET_HIGH:
-        rating = "slow"
-        note = (f"averages {avg:.1f}s, just outside the "
-                f"{TARGET_LOW:.0f}-{TARGET_HIGH:.0f}s band. "
-                f"{images_for(sum(s))} images would land inside it.")
-    elif avg < TARGET_LOW:
-        rating = "fast"
-        note = (f"averages {avg:.1f}s, quicker than the "
-                f"{TARGET_LOW:.0f}-{TARGET_HIGH:.0f}s band - fine if deliberate.")
+        note = (f"its normal cuts average {body_avg:.1f}s - the band is "
+                f"{TARGET_LOW:.0f}-{TARGET_HIGH:.0f}s. About "
+                f"{images_for(sum(s))} images would fix it, not {n}.")
+    elif body_avg < TARGET_LOW:
+        rating = "too fast"
+        note = (f"even its normal cuts average {body_avg:.1f}s, under the "
+                f"{TARGET_LOW:.0f}s floor - everything reads as an accent, so "
+                f"nothing stands out.")
     else:
         rating = "on target"
-        note = f"averages {avg:.1f}s, inside the target band."
+        note = (f"normal cuts average {body_avg:.1f}s, inside the "
+                f"{TARGET_LOW:.0f}-{TARGET_HIGH:.0f}s band.")
 
+    if accents:
+        note += (f" {len(accents)} accent cut(s) under {ACCENT_HIGH:.0f}s "
+                 f"({accent_share * 100:.0f}%)")
+        note += ("." if accent_share <= ACCENT_SHARE_MAX else
+                 f" - above {ACCENT_SHARE_MAX * 100:.0f}%, so they stop reading "
+                 f"as emphasis.")
     if over_hard:
         note += (f" {len(over_hard)} image(s) hold longer than "
                  f"{HARD_MAX:.0f}s (worst {max(over_hard):.1f}s).")
-    if under_min:
-        note += f" {len(under_min)} hold under {MIN_HOLD:.1f}s and will flash."
+    if flashes:
+        note += f" {len(flashes)} under {MIN_HOLD:.1f}s will flash."
 
     return {
         "n": n,
         "total": round(sum(s), 2),
         "avg": round(avg, 2),
+        "body_avg": round(body_avg, 2),
         "median": round(median, 2),
         "min": round(s[0], 2),
         "max": round(s[-1], 2),
+        "accents": len(accents),
+        "accent_share": round(accent_share, 3),
         "over_hard": len(over_hard),
-        "under_min": len(under_min),
+        "flashes": len(flashes),
         "target_low": TARGET_LOW,
         "target_high": TARGET_HIGH,
         "hard_max": HARD_MAX,
+        "accent_high": ACCENT_HIGH,
+        "min_hold": MIN_HOLD,
         "want_images": images_for(sum(s)),
         "rating": rating,
         "note": note,
