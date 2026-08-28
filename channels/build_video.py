@@ -35,7 +35,7 @@ import scipy.signal as sps
 import soundfile as sf
 
 sys.path.insert(0, str(Path(__file__).parent))
-from pipeline import imageplan, pacing
+from pipeline import clips, imageplan, motion, pacing
 from pipeline.align import align, anchor_report
 from pipeline.scenesplit import make_scenes
 from pipeline.project import Project
@@ -311,7 +311,7 @@ def build_voice(sections_dir: Path, rec_dir: Path, work: Path,
 #  Stage 3 - mux
 # ---------------------------------------------------------------------------
 def mux(plan_entries: list[dict], audio: Path, out: Path, work: Path,
-        width: int, height: int, fps: int) -> None:
+        width: int, height: int, fps: int, motion_provider: str = "none") -> None:
     from PIL import Image
 
     print("\nPreflight:")
@@ -350,6 +350,16 @@ def mux(plan_entries: list[dict], audio: Path, out: Path, work: Path,
         raise SystemExit(1)
     print("  all checks passed")
 
+    if motion_provider != "none":
+        # A moving picture cannot be described by one shared -vf, because each
+        # slot's move differs - so this path renders a clip per slot and stream
+        # copies them together. It is a different route to the same timeline:
+        # the durations come from the same plan entries, so cuts land in exactly
+        # the same places as the still path. See pipeline/clips.py.
+        _mux_with_motion(plan_entries, audio, out, work, width, height, fps,
+                         motion_provider)
+        return
+
     # The concat demuxer ignores the duration of the FINAL entry, so the last file
     # is repeated with no duration to close the timeline out.
     concat = work / "concat_list.txt"
@@ -385,6 +395,48 @@ def mux(plan_entries: list[dict], audio: Path, out: Path, work: Path,
         print(proc.stderr[-3000:])
         raise SystemExit("ffmpeg failed - see the log above.")
 
+    print(f"\n  {out}  ({out.stat().st_size / 1e6:.1f} MB)")
+
+
+def _mux_with_motion(plan_entries: list[dict], audio: Path, out: Path, work: Path,
+                     width: int, height: int, fps: int, provider_name: str) -> None:
+    """Render each slot as its own clip, then join them and add the voiceover.
+
+    THE CLIPS ARE CACHED IN build/, which is already documented as safe to
+    delete and regenerate. That is what makes re-rendering after swapping one
+    picture cheap, and it is what will make a generative provider affordable at
+    all - see the provider note in pipeline/clips.py.
+    """
+    provider = clips.PROVIDERS[provider_name]()
+    slots = [clips.Slot(i, Path(e["path"]), float(e["duration"]))
+             for i, e in enumerate(plan_entries)]
+
+    moving = sum(1 for s in slots if not motion.move_for(s.index, s.hold).is_static)
+    print(f"\nMotion: {provider_name} - {moving} of {len(slots)} slots move, "
+          f"{len(slots) - moving} held static as accents")
+
+    cache = work / "clips" / provider_name
+    print(f"Rendering clips into {cache}...")
+
+    def progress(i: int, n: int, note: str) -> None:
+        if i == n:
+            print(f"  {note}")
+        elif i % 10 == 0 or i == 1:
+            print(f"  {i}/{n}", end="\r")
+
+    paths = clips.render_sequence(slots, provider, cache, width, height, fps,
+                                  on_progress=progress)
+
+    print(f"\nJoining {len(paths)} clips and adding the voiceover...")
+    clips.concat_clips(paths, out, audio=audio, work=work)
+
+    # The clip route builds duration slot by slot rather than handing ffmpeg one
+    # list, so it is worth confirming the total still matches what the plan
+    # asked for before trusting the sync.
+    want = sum(e["duration"] for e in plan_entries)
+    got = clips.probe_duration(out)
+    print(f"  planned {want:.2f}s   rendered {got:.2f}s   "
+          f"drift {abs(got - want):.3f}s")
     print(f"\n  {out}  ({out.stat().st_size / 1e6:.1f} MB)")
 
 
@@ -511,6 +563,13 @@ def main() -> None:
     ap.add_argument("--width", type=int, default=1280)
     ap.add_argument("--height", type=int, default=720)
     ap.add_argument("--fps", type=int, default=30)
+    ap.add_argument("--motion", default="none",
+                    choices=tuple(["none"] + sorted(clips.PROVIDERS)),
+                    help="how a picture behaves while it is on screen. 'none' is "
+                         "the plain concat of stills. 'kenburns' gives each slot "
+                         "a slow zoom or drift sized by its hold, which is what "
+                         "makes an over-long hold watchable - accents under "
+                         "2s stay static on purpose. See pipeline/motion.py.")
     ap.add_argument("--stage", default="all",
                     choices=("check", "all", "voice", "plan", "mux"),
                     help="run one stage. 'voice' and 'plan' cache to --work, so a "
@@ -625,7 +684,8 @@ def main() -> None:
         if not plan_path.exists() or not vo_path.exists():
             raise SystemExit("run --stage voice and --stage plan first")
         entries = json.loads(plan_path.read_text(encoding="utf-8"))
-        mux(entries, vo_path, args.out, args.work, args.width, args.height, args.fps)
+        mux(entries, vo_path, args.out, args.work, args.width, args.height,
+            args.fps, args.motion)
 
 
 if __name__ == "__main__":
