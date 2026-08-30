@@ -1,0 +1,166 @@
+/* A local tool, so this is deliberately one stylesheet and no framework.
+   Dark by default: the operator is looking at video frames all day and a white
+   page beside them wrecks the only judgement this UI exists to support. */
+
+:root {
+  --bg: #14161a;
+  --panel: #1c1f26;
+  --panel-2: #232833;
+  --line: #2e3441;
+  --ink: #e6e9ef;
+  --dim: #98a1b3;
+  --faint: #6a7285;
+  --accent: #6ea8fe;
+  --ok: #5ed69a;
+  --warn: #f5c451;
+  --bad: #f27a7a;
+  --radius: 8px;
+  --mono: ui-monospace, "Cascadia Code", "Consolas", monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---------------------------------------------------------------- shell */
+.shell { display: flex; min-height: 100vh; }
+
+.side {
+  width: 232px; flex: none; background: var(--panel);
+  border-right: 1px solid var(--line); padding: 16px 12px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.side h1 { font-size: 15px; margin: 0 8px 4px; letter-spacing: .2px; }
+.side .sub { font-size: 11px; color: var(--faint); margin: 0 8px 14px; }
+
+.nav { display: block; padding: 7px 10px; border-radius: 6px; color: var(--dim); }
+.nav:hover { background: var(--panel-2); text-decoration: none; color: var(--ink); }
+.nav.on { background: var(--panel-2); color: var(--ink); box-shadow: inset 2px 0 0 var(--accent); }
+.nav.off { opacity: .38; pointer-events: none; }
+.nav small { display: block; font-size: 10px; color: var(--faint); }
+
+.main { flex: 1; padding: 22px 26px 60px; min-width: 0; }
+
+/* ---------------------------------------------------------------- bits */
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.spread { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.grid { display: grid; gap: 12px; }
+.muted { color: var(--dim); }
+.faint { color: var(--faint); font-size: 12px; }
+.mono { font-family: var(--mono); font-size: 12px; }
+
+h2 { font-size: 19px; margin: 0 0 3px; }
+h3 { font-size: 14px; margin: 20px 0 8px; color: var(--dim); font-weight: 600; }
+
+.card {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 14px 16px;
+}
+
+button {
+  background: var(--panel-2); color: var(--ink); border: 1px solid var(--line);
+  padding: 6px 13px; border-radius: 6px; cursor: pointer; font-size: 13px;
+  font-family: inherit;
+}
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: .4; cursor: not-allowed; }
+button.primary { background: var(--accent); color: #10131a; border-color: var(--accent); font-weight: 600; }
+button.danger { color: var(--bad); }
+
+select, input[type="text"], input[type="number"], textarea {
+  background: var(--bg); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 6px; padding: 6px 9px; font-family: inherit; font-size: 13px;
+}
+textarea { width: 100%; font-family: var(--mono); line-height: 1.6; resize: vertical; }
+
+.pill {
+  display: inline-block; padding: 1px 8px; border-radius: 999px;
+  font-size: 11px; border: 1px solid var(--line); color: var(--dim);
+}
+.pill.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+.pill.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); }
+.pill.bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, transparent); }
+
+.banner { padding: 10px 13px; border-radius: 6px; border: 1px solid; margin: 10px 0; }
+.banner.bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 35%, transparent); background: color-mix(in srgb, var(--bad) 8%, transparent); }
+.banner.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 35%, transparent); background: color-mix(in srgb, var(--warn) 8%, transparent); }
+.banner.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 35%, transparent); background: color-mix(in srgb, var(--ok) 8%, transparent); }
+
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+th { color: var(--faint); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; }
+td.num, th.num { text-align: right; font-family: var(--mono); }
+
+/* ---------------------------------------------------------------- pacing bar */
+.bar { height: 8px; background: var(--panel-2); border-radius: 4px; overflow: hidden; display: flex; }
+.bar i { display: block; height: 100%; }
+
+/* ---------------------------------------------------------------- log */
+.log {
+  background: #0e1014; border: 1px solid var(--line); border-radius: 6px;
+  padding: 10px 12px; font-family: var(--mono); font-size: 12px;
+  white-space: pre-wrap; word-break: break-word;
+  max-height: 340px; overflow: auto; color: #c8cedb;
+}
+
+/* ---------------------------------------------------------------- images */
+.thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; }
+.thumb { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.thumb img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #fff; }
+.thumb .cap { padding: 4px 6px; font-size: 10px; color: var(--faint); }
+
+.drop {
+  border: 1.5px dashed var(--line); border-radius: var(--radius);
+  padding: 20px; text-align: center; color: var(--dim); cursor: pointer;
+}
+.drop.over { border-color: var(--accent); color: var(--ink); }
+
+/* -------------------------------------------------------------- timeline */
+/* One long horizontally-scrolling strip - a real video is minutes of slots
+   at 30px/s, so scrolling inside its own track (never the page) is the only
+   way this stays usable. See Timeline.tsx. */
+.tl-scroll { overflow-x: auto; overflow-y: hidden; border: 1px solid var(--line);
+  border-radius: var(--radius); background: var(--panel); }
+.tl-track { position: relative; height: 96px; }
+.tl-slot {
+  /* NOT overflow:hidden - the resize handle deliberately sits half-outside
+     the slot's own right edge (see .tl-handle) so it is easy to grab without
+     overlapping the neighbour slot's own click/drag area. */
+  position: absolute; top: 8px; bottom: 8px;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px;
+  cursor: grab; user-select: none;
+}
+.tl-slot img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: .85;
+  border-radius: 3px; pointer-events: none; }
+.tl-slot.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.tl-slot.motion { border-color: var(--ok); }
+.tl-slot.missing { background: repeating-linear-gradient(45deg, var(--panel-2), var(--panel-2) 6px, #2a1f1f 6px, #2a1f1f 12px); }
+.tl-slot .tl-idx { position: absolute; left: 3px; top: 2px; font-size: 9px; color: var(--dim);
+  background: rgba(0,0,0,.45); padding: 0 3px; border-radius: 3px; pointer-events: none; }
+.tl-slot .tl-mo { position: absolute; right: 3px; top: 2px; font-size: 9px; color: var(--ok);
+  background: rgba(0,0,0,.45); padding: 0 3px; border-radius: 3px; pointer-events: none; }
+
+/* THIS SLOT'S OWN right-edge trim handle - not a separate element floating
+   between two slots, so a drag here is unambiguously "resize me", and it
+   sits ON TOP of the slot's own draggable body (z-index) so grabbing the
+   edge pixel never gets read as the start of a reorder-drag instead. */
+.tl-handle {
+  position: absolute; top: 0; bottom: 0; right: -6px; width: 12px;
+  cursor: ew-resize; z-index: 3;
+}
+.tl-handle::after {
+  content: ""; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px;
+  border-radius: 1px; background: var(--line);
+}
+.tl-handle:hover::after, .tl-handle.active::after { background: var(--accent); width: 3px; left: 4.5px; }
+.tl-ruler { position: relative; height: 18px; border-bottom: 1px solid var(--line); }
+.tl-ruler span { position: absolute; top: 2px; font-size: 9px; color: var(--faint); transform: translateX(-50%); }
+.tl-detail { margin-top: 12px; }

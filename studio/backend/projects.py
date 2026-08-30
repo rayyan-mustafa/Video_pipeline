@@ -14,6 +14,7 @@ from . import paths
 
 paths.ensure_importable()
 from pipeline.project import Project          # noqa: E402
+from pipeline import config                   # noqa: E402
 
 AUDIO_EXTS = (".wav", ".flac", ".m4a", ".mp3")
 IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".bmp")
@@ -122,3 +123,33 @@ def create(channel: str, topic: str) -> dict:
     status = project_status(proj)
     status["created"] = not existed
     return status
+
+
+# The default channel for a topic from the bank. Every existing project lives
+# here, and `run_script.py`'s topics are all this channel's subject matter.
+DEFAULT_CHANNEL = "wierdbiology"
+
+
+def topics() -> list[dict]:
+    """The whole topic bank, each marked with whether it exists as a project yet.
+
+    WHY THE UI NEEDS THIS. `run_script.py` only accepts one of these 15 keys -
+    each has curated source URLs, and a free-text topic has nowhere to get its
+    evidence from. So the UI offers the bank rather than a text box, and shows at
+    a glance which fourteen have not been started.
+    """
+    existing = {p["id"] for p in list_projects()}
+    rows = []
+    for key, meta in config.TOPICS.items():
+        pid = f"{DEFAULT_CHANNEL}/{key}"
+        rows.append({
+            "topic": key,
+            "channel": DEFAULT_CHANNEL,
+            "id": pid,
+            "title": meta.get("title", key),
+            "stake": meta.get("stake", ""),
+            "audience": meta.get("audience", ""),
+            "sources": len(meta.get("sources", [])),
+            "exists": pid in existing,
+        })
+    return rows

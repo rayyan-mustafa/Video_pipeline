@@ -26,8 +26,10 @@ things — Whisper `large-v3` alignment on a **GPU** runtime, and the ffmpeg ren
 on a **free CPU** runtime. Keeping those two on separate runtimes is the whole
 reason the monthly bill is ~3 units instead of ~8.
 
-**Phases 0–2 are done and committed. Phase 2.5 (motion) is built but UNCOMMITTED.**
-Backend runs on `127.0.0.1:8770`. No frontend exists yet.
+**Phases 0–3 are done.** The voice stage now runs end to end locally and there
+are real measured holds for the first time — which is what unblocks Phase 4.
+Backend on `127.0.0.1:8770`, **frontend on `:5173`** (Vite + React + TS, built
+2026-08-28). See "DONE 2026-08-28" for what Phase 3 actually cost.
 
 ---
 
@@ -385,15 +387,20 @@ Also evict the UNet before VAE decode or 16 frames will not fit beside it.
   OK   Phase 0    git init, .gitignore, secrets kept out of history
   OK   Phase 1    backend skeleton: projects, jobs+SSE, guarded file serving
   OK   Phase 2    script / plan / images endpoints + pacing as first-class
-  WARN Phase 2.5  motion: rate-based Ken Burns, provider seam, A/B harness
-                  BUILT AND VERIFIED, NOT COMMITTED
-  --   Phase 3    voice stage - Whisper large-v3 timings      <- NEXT, and it
-                  blocks every phase below it                    is the blocker
-  --   Phase 4    motion slots + VideoAssetProvider (Flow ingest)
-  --   Phase 5    the timeline editor
+  OK   Phase 2.5  motion: rate-based Ken Burns, provider seam, A/B harness
+                  (committed as bc4ff7c - the note calling this uncommitted
+                  was stale)
+  OK   Phase 3    voice stage - RUNS END TO END LOCALLY on `base`. Naming is
+                  resolved by measurement, alignment lands 105/105 anchored,
+                  full_vo.wav masters without dying. large-v3 not yet run.
+  OK   Phase 4    motionplan.py + VideoAssetProvider. Selection, ingest,
+                  validation and concat all verified. NOT yet wired into
+                  build_video.py's render path - see "Still open in Phase 4".
+  --   Phase 5    the timeline editor                            <- NEXT
   --   Phase 6    render + preview — Colab CPU runtime, local as fallback
   --   Phase 7    AI script generation
-  --   (unscheduled) the React frontend - nothing exists yet
+  OK   frontend   Vite + React + TS. Projects / Script / Plan / Images /
+                  Voice / Jobs, driven off the 15-topic bank.
 ```
 
 Commits on branch **`studio-ui`**:
@@ -450,9 +457,17 @@ Assets arrive as files; the pipeline never calls an image or video API.
 
 ## Run it
 
+Two processes. The Vite dev server **proxies `/api` to the backend**, so the
+frontend uses relative paths and the CORS allowlist is not load-bearing.
+
 ```powershell
+# 1. backend
 cd f:\wierd_bio
 .\vo_coach\.venv\Scripts\python.exe -m uvicorn studio.backend.app:app --host 127.0.0.1 --port 8770
+
+# 2. frontend  (npm install once)
+cd f:\wierd_bio\studio\frontend
+npm run dev            # http://localhost:5173
 ```
 
 **Always `vo_coach\.venv`** (Python 3.12.10). `channels\.venv` lacks
@@ -481,8 +496,20 @@ POST /api/projects/{ch}/{tp}/plan                   {split, seconds_per_image, t
 GET  /api/projects/{ch}/{tp}/images                 scan + alternates + by_section
 GET  /api/projects/{ch}/{tp}/images/pacing          per-section hold table
 POST /api/projects/{ch}/{tp}/images                 multipart upload
+GET  /api/topics                                    the 15-topic bank + exists
+GET  /api/projects/{ch}/{tp}/voice                  takes, naming proposal, results
+POST /api/projects/{ch}/{tp}/voice/recordings       multipart upload, kept verbatim
+GET  /api/projects/{ch}/{tp}/voice/naming           the proposal + its evidence
+POST /api/projects/{ch}/{tp}/voice/naming           apply it   {"force": bool}
+DEL  /api/projects/{ch}/{tp}/voice/naming           undo, from naming.json
+POST /api/projects/{ch}/{tp}/voice/run              {whisper, raw_voice, split}
 GET  /api/jobs  ·  /api/jobs/{id}  ·  /api/jobs/{id}/stream  ·  POST .../cancel
 ```
+
+Verified end to end over the Vite proxy: every route 200s, `/api/file` still
+403s `.env`, `.git/config`, `.py` sources and anything outside the repo, and a
+brand-new empty project returns sensible answers from all of them rather than
+throwing.
 
 Verified against the chin project:
 ```text
@@ -497,6 +524,13 @@ PLAN    match, 105 scenes / 105 images, fingerprint b5da03f977a7c0d4
 
 ### New (2026-08-27 / 28)
 ```text
+channels/pipeline/recordings.py    which take is which section, by measurement
+channels/pipeline/motionplan.py    which slots get a Flow clip, and why not more
+channels/test_motionplan.py        18 checks on synthetic render plans
+studio/backend/motionstage.py      motion slots + clip ingest for the UI
+channels/test_recordings.py        23 checks, runs on generated silence
+studio/backend/voicestage.py       naming + alignment + results, per project
+studio/frontend/                   Vite + React + TS (see "Run it")
 channels/pipeline/pacing.py        the pacing spec, shared by planner + checker
 channels/pipeline/motion.py        the motion spec: rate not total, accents static
 channels/pipeline/clips.py         per-slot clip render + provider seam + cache
@@ -523,24 +557,216 @@ STEP11_RESUME.md            redacted a verbatim HF token
 
 ### Still to build
 ```text
-channels/pipeline/project.py    ADD a `motion` property + make_dirs entry.
-                                <project>/motion/ is referenced all through this
-                                doc and does NOT exist in Project yet.
-channels/pipeline/motionplan.py which slots get a Flow clip (Phase 4)
 studio/backend/settings.py      colab_url, render target
 studio/backend/colab.py         ColabClient over the tunnel
-studio/backend/voicestage.py    transcribe: local or Colab
 studio/backend/timeline.py      editor data source
 studio/backend/overrides.py     build/overrides.json
 studio/backend/rendering.py     mux: local or Colab CPU (never GPU)
 studio/colab_render.ipynb       CPU-runtime render job, HAS_GPU guarded
 studio/colab_worker.ipynb       FastAPI + cloudflared worker
-studio/frontend/                Vite + React + TypeScript — nothing exists yet
+studio/frontend/src/pages/      Motion page - Phase 4 slot picker + ingest
 ```
+
+Built since this list was written: `Project.motion`, `pipeline/recordings.py`,
+`studio/backend/voicestage.py`, and the whole frontend.
 
 ---
 
-## Next: Phase 3 — the voice stage, and why it blocks everything
+## DONE 2026-08-28 — Phase 3 landed. What actually happened
+
+**The voice stage runs end to end locally.** Three things were in the way and all
+three are now fixed; two of them were general problems wearing a chin costume.
+
+### 1. The naming mismatch was never chin-specific
+
+Six takes, five sections, named `1.wav`..`6.wav`. Resolved by **measurement, not
+by hand**: a section's word count predicts its duration, and a reader's wpm is
+roughly constant across one sitting, so the right grouping is the one where every
+section lands at about the same pace.
+
+```text
+  1 2 3+4 5 6      spread  25 wpm     <- correct, and confirmed by content
+  1 2 3 4+5 6      spread 100 wpm
+  1 2 3 4 5+6      spread 198 wpm
+  1 2+3 4 5 6      spread 312 wpm
+  1+2 3 4 5 6      spread 310 wpm
+```
+
+Section 3 was read in two takes. Confirmed independently: 3.wav opens section 3
+verbatim, 5.wav opens section 4 verbatim, and 4.wav starts mid-prose at word
+362/520 (70%) of section 3 — matching 3.wav's 65% share of the joined duration.
+
+This now lives in **`channels/pipeline/recordings.py`** and runs for any topic.
+It **proposes and shows its margin; it never renames on its own** — the mapping
+is strong evidence, not proof, and a wrong one wastes a `large-v3` pass. Thin
+margin → `ambiguous`, and the UI refuses one-click apply. `apply()` writes
+`naming.json` first so it is always reversible, stages renames through temporary
+names so a permutation cannot lose a file, and refuses to clobber a bystander.
+
+### 2. The limiter died on the first full-length video
+
+`voice._limit` built five full-length float64 temporaries — ~1.4 GB for a ten
+minute video — and threw `MemoryError` **after** the expensive Whisper pass had
+already succeeded, which is the worst possible moment to fail. It now works in
+~2M-sample blocks with a `w//2 + s//2` halo. Both filters have finite support, so
+this is exact rather than approximate: bit-identical up to ~30s and within
+1.7e-13 beyond (that is `uniform_filter1d`'s running-sum rounding, about
+-260 dBFS, a hundred dB under the 16-bit floor it is written at). **Peak memory no
+longer grows with runtime**, so a fifteen-minute video costs what this one does.
+Measured: 2.0s to limit the real 228 MB array.
+
+### 3. Measured holds now exist
+
+```text
+  section  1    35.9s    9 scenes   word match 75.0%   anchored  9/9
+  section  2    79.9s   12 scenes   word match 92.2%   anchored 12/12
+  section  3   250.4s   35 scenes   word match 88.2%   anchored 35/35   (2 takes)
+  section  4   150.8s   36 scenes   word match 93.5%   anchored 36/36
+  section  5    76.8s   13 scenes   word match 92.4%   anchored 13/13
+
+  105 scenes, 9.90 min      anchored 105/105 (100%)
+  1318 word timestamps -> words.json
+  full_vo.wav  593.74s  -14.2 LUFS  peak -1.5 dBFS  SNR 42.4 dB
+  render_plan.json: 0 gaps, 0 overlaps, all sync checks passed
+```
+
+Note section 1 scores 75.0% word-match yet anchored 9/9 — exactly the trap this
+doc already warns about. **Anchored is the real number.**
+
+The measured verdict confirms the estimate that was in this doc:
+
+```text
+  body average  6.3s   (band 2-4s)      65 of 105 over 4s     worst 15.3s
+  needs ~198 images, has 105
+```
+
+**This was run on `base`, not `large-v3`.** The timings are good enough to build
+Phase 4 against; re-align on `large-v3` before shipping.
+
+---
+
+## DONE 2026-08-28 - THE 45s TARGET, and the three bugs behind it
+
+Target set by the operator: **4s motion clips totalling ~45s, stills at 2-4s,
+1s allowed for emphasis.** Delivered as a SHOT SHEET - the file you take to Nano
+Banana and Flow - because the pictures do not exist yet.
+
+```text
+  217 slots over 593.74s      pacing "on target", body average 2.8s
+  206 stills                  7 accents (3%), only 2 slots over 4s (worst 5.7s)
+   11 motion clips            ALL 11 inside [3.5, 4.0] - 41.3s, 7.0% of runtime
+```
+
+`build/shot_sheet.txt` (whole video) and `build/shot_sheet_section1.txt`.
+A motion slot carries BOTH prompts, still first: Flow is image-to-video, so the
+picture is step one of two, not an alternative.
+
+### Three bugs had to be fixed to get there, and all three were general
+
+**1. The picture count was silently capped at the SCENE count.**
+`group_into_images` could only merge whole scenes, never split one. On chin that
+capped the video at 114 pictures = 5.2s each - over the 4s ceiling before a frame
+is drawn, and unreachable by any flag. It now splits, and the doc's own
+"word-cuts" mode is finally reachable from the planner rather than only from
+`--ignore-plan`.
+
+**2. `plan_from_binding` cannot time pictures that share a scene.**
+"Each picture inherits the span of the scenes it owns" is exact only while a
+picture owns WHOLE scenes. Once three pictures split one sentence they all
+reported the same scene_index, inherited the same span, and the tiling pass
+crushed two of them onto the 0.5s floor - **81 of 181 slots flattened to 0.50s**,
+45% accents. Fixed by `_spans_from_words`: when a section has more pictures than
+scenes, each picture is timed by its own words against words.json. Whisper
+supplies the clock, the script supplies the words - never the transcript, which
+is only 75-93% word-accurate and would quietly rewrite the prompts.
+
+**3. Word counts cannot place a motion slot. Only measured time can.**
+Slots built at 9 words - 4.0s at the section's average pace - came out between
+**2.82s and 5.44s**, because delivery speed varies far more WITHIN a section than
+between sections. Only 3 of 11 landed in the window. `pipeline/timeplan.py` is the
+second pass: plan in words, record, align, then re-cut against real timestamps.
+That took it to **11/11**. This is now the documented workflow:
+
+```text
+  plan_script.py --split dash --motion-seconds 45 --wpm <measured>
+  build_video.py --stage voice                       <- produces words.json
+  plan_script.py ... --refine-from-words             <- re-cut, 11/11 in window
+```
+
+`--refine-from-words` needs the voice stage to have run once. It changes only
+where cuts fall - never the script, the scene texts, or the fingerprint.
+
+**41.3s, not 45s**: cuts land on real word boundaries, so each clip's hold is
+3.52-3.98s rather than exactly 4.0. Flow still exports 4.0s and
+`VideoAssetProvider` trims the tail, exactly as designed.
+
+### Still open
+
+- **Images do not exist yet.** 217 slots planned; chin has 122 files on disk
+  named for the OLD 105-slot plan. The sheet is what generates the new set.
+- `imageplan.plan_from_binding(require_images=False)` is what lets the sheet be
+  built before the pictures - a render must always keep the default.
+- `build_video.py` still has no `--motion videoasset` wiring (Phase 4 note below).
+
+---
+
+## DONE 2026-08-28 — Phase 4 is BUILT, and it found a real problem
+
+Both halves exist: `pipeline/motionplan.py` (selection) and
+`clips.VideoAssetProvider` (ingest). 18 tests in `test_motionplan.py`.
+
+### The provider seam is proven, not just asserted
+
+A Ken Burns clip and an ingested Flow clip were joined with `concat -c copy`:
+
+```text
+  kenburns    1280x720 @ 24fps   72 frames   3.000s
+  videoasset  1280x720 @ 24fps   86 frames   3.583s   (4.000s source, tail trimmed)
+  joined      1280x720 @ 24fps  158 frames   6.583s   <- exact, no re-encode
+```
+
+Ingest validation fires as specced: a 2s clip on a 3.58s slot is a **hard fail**
+naming the file, a missing clip fails clearly, and the output frame count is
+verified to be exactly `motion.frames_for(hold, fps)` because `concat -c copy`
+cannot fix drift afterwards.
+
+### THE FINDING: the window and the ceiling rule fight each other
+
+The spec says motion goes on the slots at the ceiling, and that a slot qualifies
+only if its hold is in [3.5, 4.0]. On chin those two rules barely intersect:
+
+```text
+  <0.5   flash                 0
+  0.5-2  accent               13
+  2-3.5  body                 21
+  3.5-4  MOTION WINDOW         6     <- the only candidates
+  >4     over the ceiling     65     <- where motion is MOST wanted,
+                                        and where a 4s clip cannot go
+```
+
+Only **6** candidates against a dose of 14-22, and adjacency drops two of them
+(slots 2/3 and 55/56 are neighbours), leaving **4**. The 65 over-ceiling holds run
+up to 15.26s — covering one would mean slowing or freezing the clip, both banned.
+
+**This is not a bug and the planner does not paper over it.** It reports the
+shortfall and names the fix, which is upstream: chin is under-planned at 105
+pictures where the verdict asks for ~198. Re-planned at that count, most of those
+65 long holds land inside the window and become candidates. **So re-plan chin
+before buying any Flow clips for it** — the slot list will change completely.
+
+### Still open in Phase 4
+
+- `build_video.py` has no `--motion videoasset` wiring yet: the provider works
+  and is tested, but the render path still only offers `none|kenburns|still`.
+  A motion build needs a *per-slot* provider choice, not one global provider.
+- The dose contradiction under Known gaps has to be settled before the numbers
+  the Motion page shows can be called correct.
+
+---
+
+## Next: Phase 5 — and the superseded Phase 3 notes below
+
+### The voice stage, as it was written before it was built
 
 **This is the next thing to build, and the reason is stronger than it was.**
 
@@ -674,7 +900,18 @@ image through colab-mcp (1,048,576-byte frame cap).
 
 ## Known gaps
 
-- **No frontend at all.** No `package.json`, no React. Node 24 / npm 11 available.
+- **THE MOTION DOSE IS SELF-CONTRADICTORY IN THIS DOC AND NEEDS A DECISION.**
+  The band is stated as **10-15%** in three places, but every worked example
+  uses 10-11.5%: "12-14 clips per 8 min" is 10.0-11.5% of 480s, not 10-15%
+  (which would be 12-18), and "15-17 clips" for chin's 602s is likewise
+  10-11.3%, not 15-22. `pacing.motion_dose()` implements the **stated 10-15%
+  band**, so it returns 14-22 for chin where the prose says 15-17. Pick one:
+  either the band is really 10-11.5%, or the clip counts in the prose are wrong.
+- **`large-v3` has still never been run.** Everything measured so far is `base`.
+- **The chin `.wav` takes were renamed** to `section_01/02/03_a/03_b/04/05`.
+  `voice_recordings/naming.json` records the mapping and reverts it.
+- **No frontend tests.** `tsc` typechecks and every route was exercised by hand
+  over the proxy, but nothing is automated.
 - **Chin fails the pacing spec** (6.7s body average vs 2-4s band). Now cheap to
   fix: it needs ~100 more pictures and pictures are external/Nano Banana.
 - **Transitions are deliberately absent.** Motion exists now, but only *inside*
@@ -686,20 +923,17 @@ image through colab-mcp (1,048,576-byte frame cap).
   needed for Studio; all 9 packages we do need import cleanly.
 - **`run_script.py` topics are a fixed bank of 15**, each needing curated source
   URLs. Free-text topics are not supported.
-- **Phase 2.5 is uncommitted.** `motion.py`, `clips.py`, `ab_motion.py` and the
-  `build_video.py` changes are verified but not in git.
-- **The chin voice stage has never run locally** — recordings are named
-  `1.wav`..`6.wav` against a `section_NN.wav` matcher, 6 files for 5 sections.
-  No `render_plan.json`, so no measured holds, so no motion-slot selection.
+- ~~The chin voice stage has never run locally~~ **IT NOW HAS**, on `base`.
+  `words.json`, `full_vo.wav` and `render_plan.json` all exist.
 - **The 0.27 u/video Colab estimate is unmeasured.** See Phase 3 step 7.
 - **Flow and Nano Banana costs are unsized.** A second budget nobody has modelled.
-- **`<project>/motion/` does not exist yet.** `Project` has no `motion`
-  property and `make_dirs()` does not create it. Every reference to that folder
-  in this doc is a plan, not a fact.
+- ~~`<project>/motion/` does not exist~~ **BUILT.** `Project.motion` exists and
+  `make_dirs()` creates it, verified on a freshly created project.
 - **Flow clip validation is specced but unbuilt.** The checks are written down
   under Phase 4; `VideoAssetProvider` does not exist yet.
-- **`pacing.py` does not yet have `MOTION_CLIP_S` / `MOTION_SLOT_MIN`.** The
-  policy is decided and documented; the constants are not in the code.
+- ~~`pacing.py` lacks `MOTION_CLIP_S` / `MOTION_SLOT_MIN`~~ **BUILT**, plus
+  `MOTION_SHARE_LOW/HIGH`, `motion_slots_for()`, `motion_dose()` and
+  `fits_motion()`. See the dose contradiction above.
 - **Colab CPU render speed is unmeasured.** The 3-5 min figure is the laptop's
   measured 1.30x realtime divided by an assumed 2-4x CPU advantage. Clock it once.
 - **No guard exists yet against rendering on a GPU runtime.** Until

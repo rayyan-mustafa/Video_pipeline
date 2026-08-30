@@ -35,7 +35,8 @@ import scipy.signal as sps
 import soundfile as sf
 
 sys.path.insert(0, str(Path(__file__).parent))
-from pipeline import clips, imageplan, motion, pacing
+from pipeline import (clips, imageplan, motion, motionplan, pacing, timeplan,
+                      transcribe)
 from pipeline.align import align, anchor_report
 from pipeline.scenesplit import make_scenes
 from pipeline.project import Project
@@ -138,11 +139,26 @@ def _read_section_audio(paths: list[Path]) -> tuple[np.ndarray, int]:
 # ---------------------------------------------------------------------------
 #  Stage 1 - master, align, concatenate
 # ---------------------------------------------------------------------------
+# HOW EACH VOICE PROFILE IS APPLIED, in two passes: per-section before
+# alignment, then once over the concatenated voiceover. The second pass must
+# never change length - the timeline is already derived from the first.
+#   clip     full chain, trims silence   -> timeline (full chain, length-locked)
+#   natural  trim + level, no tone       -> raw      (level only, length-locked)
+#   raw      level only, keeps pauses    -> raw
+VOICE_PROFILES = {
+    "clip": ("clip", "timeline"),
+    "natural": ("natural", "raw"),
+    "raw": ("raw", "raw"),
+}
+
+
 def build_voice(sections_dir: Path, rec_dir: Path, work: Path,
                 whisper_size: str = "base",
                 split: str = "chunk",
                 scenes_override: list[dict] | None = None,
-                raw_voice: bool = False) -> tuple[Path, Path]:
+                raw_voice: bool = False,
+                voice_profile: str = "clip",
+                colab_url: str | None = None) -> tuple[Path, Path]:
     # PREFER THE PLAN'S OWN SCENES. script_plan.json already stores the exact
     # scene texts it bound the pictures to, so reusing them removes every chance
     # of the two sides diverging - and it is the only way "match" mode can work
@@ -157,6 +173,16 @@ def build_voice(sections_dir: Path, rec_dir: Path, work: Path,
         print(f"  split mode {split!r} -> {len(chunks)} scenes")
     sections = sorted({c["section"] for c in chunks})
 
+    # --raw-voice stays as the old spelling of --voice raw.
+    if raw_voice:
+        voice_profile = "raw"
+    if voice_profile not in VOICE_PROFILES:
+        raise SystemExit(f"unknown voice profile {voice_profile!r} - "
+                         f"choose from {', '.join(VOICE_PROFILES)}")
+    sec_profile, final_profile = VOICE_PROFILES[voice_profile]
+    print(f"  voice profile {voice_profile!r}: sections mastered as "
+          f"{sec_profile!r}, final pass {final_profile!r}")
+
     missing = [s for s in sections if not find_recording(rec_dir, s)]
     if missing:
         raise SystemExit(
@@ -164,27 +190,33 @@ def build_voice(sections_dir: Path, rec_dir: Path, work: Path,
             f"Expected section_01.wav ... section_{max(sections):02d}.wav"
         )
 
-    from faster_whisper import WhisperModel
+    # WHERE THE WORD TIMESTAMPS COME FROM is now a choice, not a constant. The
+    # seam is `pipeline/transcribe.py` and it is deliberately narrow: audio in,
+    # words out. Mastering above and alignment below both stay here, so a remote
+    # worker needs no pipeline code and cannot drift from this one.
+    tr = transcribe.make(whisper_size, colab_url)
 
-    # BUG FIX (same one the notebook's cell039 records): float16 is invalid on CPU
-    # and on pre-Volta cards, and faster-whisper's error for that case is not
-    # obvious. Pick by capability rather than assuming.
-    device, ctype = "cpu", "int8"
-    try:
-        import torch
-        if torch.cuda.is_available():
-            device = "cuda"
-            ctype = "float16" if torch.cuda.get_device_capability(0)[0] >= 7 else "int8"
-    except ImportError:
-        pass
-
-    if whisper_size.startswith("large") and device == "cpu":
-        print(f"  NOTE: {whisper_size} on CPU is roughly 10x slower than 'base'.")
-        print(f"        Expect tens of minutes. Use --whisper base locally, or run")
-        print(f"        this stage on a GPU (see COLAB_VOICE.md).")
-
-    print(f"Loading Whisper ({whisper_size}, {device}/{ctype})...")
-    wm = WhisperModel(whisper_size, device=device, compute_type=ctype)
+    if colab_url:
+        try:
+            h = tr.health()
+        except Exception as e:
+            raise SystemExit(
+                f"cannot reach the Colab worker at {colab_url}\n"
+                f"  {type(e).__name__}: {e}\n"
+                f"  Start the worker notebook and paste its current URL - a "
+                f"cloudflared quick tunnel gets a NEW address every session.")
+        print(f"Colab worker: {h.get('gpu', 'unknown GPU')}, "
+              f"model {h.get('model', '?')}")
+        if h.get("model") and h["model"] != whisper_size:
+            print(f"  NOTE: the worker has {h['model']} loaded, not "
+                  f"{whisper_size}. It will load {whisper_size} on first use.")
+    else:
+        local_dev = getattr(tr, "device", "cpu")
+        if whisper_size.startswith("large") and local_dev == "cpu":
+            print(f"  NOTE: {whisper_size} on CPU is roughly 10x slower than 'base'.")
+            print(f"        Expect tens of minutes. Use --whisper base, or point")
+            print(f"        --colab-url at a GPU worker (studio/colab_worker.ipynb).")
+        print(f"Loading Whisper ({tr.name})...")
 
     pieces, scenes, cursor, quality = [], [], 0.0, []
     word_track: list[dict] = []
@@ -200,14 +232,13 @@ def build_voice(sections_dir: Path, rec_dir: Path, work: Path,
         # "clip" trims silence, so it MUST run before alignment. "raw" changes
         # no tone and no length - the take is kept exactly as read, and only the
         # delivery level is set.
-        y = master(x, sr, profile="raw" if raw_voice else "clip")
+        y = master(x, sr, profile=sec_profile)
 
         tmp = work / f"_mastered_section_{sec:02d}.wav"
         sf.write(tmp, y.astype(np.float32), sr, subtype="PCM_16")
         total_s = len(y) / sr
 
-        segs, _ = wm.transcribe(str(tmp), word_timestamps=True)
-        words = [w for s in segs for w in (s.words or [])]
+        words = tr.words(tmp)
         spans, matched = align(words, [c["text"] for c in sec_chunks], total_s)
 
         # The number that decides whether pictures land right. word-match % is a
@@ -247,8 +278,6 @@ def build_voice(sections_dir: Path, rec_dir: Path, work: Path,
               f"word match {matched * 100:5.1f}%   "
               f"anchored {n_anchored}/{len(sec_chunks)}")
         tmp.unlink()
-
-    del wm
 
     full = np.concatenate(pieces)
     vo_raw = work / "vo_raw.wav"
@@ -297,7 +326,7 @@ def build_voice(sections_dir: Path, rec_dir: Path, work: Path,
     # ---- Delivery master: length-locked, asserted -------------------------
     print("\nMastering the full voiceover (timeline profile, length locked)...")
     n_before = len(full)
-    y = master(full, TARGET_SR, profile="raw" if raw_voice else "timeline",
+    y = master(full, TARGET_SR, profile=final_profile,
                target_lufs=DELIVERY_LUFS)
     assert len(y) == n_before, "mastering changed the length"
     full_vo = work / "full_vo.wav"
@@ -339,9 +368,45 @@ def mux(plan_entries: list[dict], audio: Path, out: Path, work: Path,
     if drift > 0.5:
         errors.append(f"video/audio mismatch of {drift:.2f}s")
 
+    # SIZE THE CHECK TO THE JOB, NOT TO THE LONGEST JOB. This was a flat 2 GB,
+    # which is about right for a full ten-minute render and refuses a 36-second
+    # test render that needs a tenth of it - exactly the render you want to be
+    # able to do on a full disk, because it is how you check the pacing before
+    # committing to the long one.
+    #
+    # MEASURE FROM AN ACTUAL CACHE WHEN ONE EXISTS. A section-by-section build
+    # (--only-section) leaves a real per-slot cache behind before the full
+    # render ever runs, and it is a far better predictor than a guess: on chin,
+    # the guessed 1 MB/s x 2.5 came out at ~1.7 GB for 598s while the measured
+    # rate from an actual 12-clip cache was ~0.15 MB/s - over 5x lower, on the
+    # exact content this build is about to encode again. Falling back to the
+    # guess only when there is nothing yet to measure keeps the check honest on
+    # a brand new project while getting sharper as a real build progresses.
+    cache = work / "clips" / motion_provider
+    measured = None
+    if cache.is_dir():
+        clips = list(cache.glob("*.mp4"))
+        if clips:
+            cached_bytes = sum(c.stat().st_size for c in clips)
+            # Each cached filename encodes its slot index; sum only the holds
+            # for slots actually on disk, so a partial cache still yields a
+            # correct MB/s rather than dividing by the whole video's length.
+            cached_idx = {int(c.stem.split("_", 1)[0]) for c in clips
+                         if c.stem.split("_", 1)[0].isdigit()}
+            cached_s = sum(e["duration"] for i, e in enumerate(plan_entries)
+                          if i in cached_idx)
+            if cached_s > 0:
+                measured = cached_bytes / cached_s  # bytes/second, this content
+
+    rate = measured * 1.8 if measured else (1.0 * 2.5) * 1024 ** 2  # bytes/s
+    source = "measured from an existing cache" if measured else "estimated"
+    need_gb = (video_len * rate) / 1024 ** 3 + 0.2
     free_gb = shutil.disk_usage(work).free / 1024 ** 3
-    if free_gb < 2.0:
-        errors.append(f"only {free_gb:.1f} GB free - ffmpeg will fail mid-encode")
+    print(f"  disk free                {free_gb:.1f} GB "
+          f"(needs ~{need_gb:.1f} GB for {video_len:.0f}s, {source})")
+    if free_gb < need_gb:
+        errors.append(f"only {free_gb:.1f} GB free but this render needs about "
+                      f"{need_gb:.1f} GB - ffmpeg will fail mid-encode")
 
     if errors:
         print("\nPREFLIGHT FAILED:")
@@ -411,7 +476,36 @@ def _mux_with_motion(plan_entries: list[dict], audio: Path, out: Path, work: Pat
     slots = [clips.Slot(i, Path(e["path"]), float(e["duration"]))
              for i, e in enumerate(plan_entries)]
 
-    moving = sum(1 for s in slots if not motion.move_for(s.index, s.hold).is_static)
+    # EXTERNAL CLIPS TAKE OVER THE SLOTS THAT ASKED FOR THEM. A slot the plan
+    # marked "video" is covered by its Flow mp4; everything else keeps the
+    # chosen still provider. Only slots whose clip has actually ARRIVED are
+    # switched over - a plan can be ahead of the asset folder, and a half-
+    # delivered set must still render rather than failing the whole build.
+    motion_slots: set[int] = set()
+    waiting: list[int] = []
+    for i, e in enumerate(plan_entries):
+        if e.get("kind") != "video":
+            continue
+        if e.get("clip_path"):
+            motion_slots.add(i)
+        else:
+            waiting.append(i)
+
+    if motion_slots:
+        clip_by_slot = {i: Path(plan_entries[i]["clip_path"]) for i in motion_slots}
+        provider = clips.MixedProvider(
+            provider, clips.VideoAssetProvider(clip_by_slot.get), motion_slots)
+        print(f"\nMotion clips: {len(motion_slots)} slot(s) covered by external "
+              f"video, {len(slots) - len(motion_slots)} by {provider_name}")
+    if waiting:
+        print(f"  NOTE: {len(waiting)} slot(s) are planned as motion but have no "
+              f"clip yet - rendering them as {provider_name}: "
+              f"{', '.join(str(i) for i in waiting[:8])}"
+              f"{' ...' if len(waiting) > 8 else ''}")
+
+    moving = sum(1 for s in slots
+                 if s.index not in motion_slots
+                 and not motion.move_for(s.index, s.hold).is_static)
     print(f"\nMotion: {provider_name} - {moving} of {len(slots)} slots move, "
           f"{len(slots) - moving} held static as accents")
 
@@ -563,6 +657,23 @@ def main() -> None:
     ap.add_argument("--width", type=int, default=1280)
     ap.add_argument("--height", type=int, default=720)
     ap.add_argument("--fps", type=int, default=30)
+    ap.add_argument("--colab-url", default=None,
+                    help="run the transcribe step on a Colab GPU worker instead "
+                         "of this machine. Start studio/colab_worker.ipynb and "
+                         "paste the cloudflared URL it prints. A quick tunnel "
+                         "gets a NEW address every session.")
+    ap.add_argument("--voice", dest="voice_profile", default="clip",
+                    choices=tuple(VOICE_PROFILES),
+                    help="clip: full mastering chain incl. silence trim "
+                         "(default). natural: trims the pauses but applies NO "
+                         "denoise, EQ, de-esser, compressor or high-pass - your "
+                         "own tone, dead air removed. raw: level only, every "
+                         "pause kept. natural and raw both change length, so "
+                         "changing this needs a re-align.")
+    ap.add_argument("--only-section", type=int, default=None,
+                    help="render ONE section only, with its own slice of the "
+                         "voiceover. For checking pacing and a motion slot "
+                         "before committing to a full-length encode.")
     ap.add_argument("--motion", default="none",
                     choices=tuple(["none"] + sorted(clips.PROVIDERS)),
                     help="how a picture behaves while it is on screen. 'none' is "
@@ -608,7 +719,9 @@ def main() -> None:
             _override = json.loads(proj.plan.read_text(encoding="utf-8")).get("scenes")
         build_voice(args.sections, args.recordings, args.work, args.whisper,
                     split=_split_mode(proj, args.split), scenes_override=_override,
-                    raw_voice=args.raw_voice)
+                    raw_voice=args.raw_voice,
+                    voice_profile=args.voice_profile,
+                    colab_url=args.colab_url)
 
     if args.stage in ("all", "plan"):
         print("\n" + "=" * 70)
@@ -632,10 +745,132 @@ def main() -> None:
         sp_path = proj.plan
         if sp_path.exists() and not args.ignore_plan:
             script_plan = json.loads(sp_path.read_text(encoding="utf-8"))
+            wpath = args.work / "words.json"
+            words = (json.loads(wpath.read_text(encoding="utf-8"))
+                     if wpath.exists() else None)
+
+            # =================================================================
+            #  MOTION SLOTS ARE RE-CUT HERE, EVERY TIME. NOT A FLAG.
+            # =================================================================
+            #  A slot is sized in WORDS at plan time, before any audio exists,
+            #  by assuming a words-per-minute rate. Real delivery varies far more
+            #  WITHIN a section than between sections, so a slot built for 4.0s
+            #  came out anywhere from 2.8s to 5.4s - only 3 of 11 landed in the
+            #  [3.5, 4.0] window a Flow clip can occupy.
+            #
+            #  `timeplan.refine` fixes that by re-cutting against measured word
+            #  timestamps. It used to be opt-in (`--refine-from-words`), and THAT
+            #  was the real defect: every re-align - a new Whisper model, a
+            #  different voice profile, a re-recorded section - silently
+            #  invalidated the motion slots, and nothing said so. Switching to
+            #  the natural voice profile broke 5 of 11 exactly this way.
+            #
+            #  So it runs unconditionally whenever timings exist, and the result
+            #  is asserted below. A motion slot can no longer be stale with
+            #  respect to the audio, because the two are recomputed together.
+            # =================================================================
+            if words and any(i.get("kind") == "video"
+                             for i in script_plan.get("images", [])):
+                rep = timeplan.refine(
+                    script_plan, words,
+                    still_target=float(script_plan.get(
+                        "seconds_per_image", pacing.DEFAULT_SECONDS_PER_IMAGE)))
+                sp_path.write_text(json.dumps(script_plan, indent=2),
+                                   encoding="utf-8")
+                print(f"  motion slots re-cut against {len(words)} measured "
+                      f"word timestamps ({rep['motion_after']} slot(s))")
+                for r in rep["sections"]:
+                    if r.get("why"):
+                        state = "re-cut" if r.get("refined") else "NOT re-cut"
+                        print(f"    section {r['section']} {state}: {r['why']}")
+
+                # RE-CUTTING MOVES THE WORDS UNDER EVERY SLOT, so any shot sheet
+                # already generated describes narration that has shifted. Saying
+                # so here is the difference between regenerating a sheet and
+                # generating 217 pictures against the wrong lines.
+                sheet = args.work / "nb_prompts.json"
+                if sheet.exists():
+                    print(f"\n  *** THE SHOT SHEET IS NOW STALE ***\n"
+                          f"  Slots were re-cut, so the narration under each one "
+                          f"moved. Regenerate before generating any pictures:\n"
+                          f"    python make_nb_prompts.py --project "
+                          f"{proj.channel}/{proj.topic}\n")
+
+            # WORKING ONE SECTION AT A TIME IS THE NORMAL WAY ASSETS ARRIVE.
+            # Pictures come back from the generator in batches, so demanding all
+            # 217 before section 1 can be checked would mean no feedback until
+            # the very end. With --only-section the whole plan is still TIMED
+            # (timing is global - a section's start depends on every section
+            # before it), but only that section's pictures have to exist.
+            # THE TIMELINE EDITOR'S ONLY OUTPUT. Applied fresh on every plan
+            # recompute rather than merged into script_plan.json, so the
+            # fingerprint that protects the sentence-to-image binding never
+            # has to know these exist. See Project.overrides and
+            # imageplan.plan_from_binding's own staleness check.
+            overrides = None
+            if proj.overrides.exists():
+                try:
+                    overrides = json.loads(proj.overrides.read_text(encoding="utf-8"))
+                except (json.JSONDecodeError, OSError) as e:
+                    print(f"  WARNING: overrides.json unreadable ({e}) - building without it")
+
             entries, warnings = imageplan.plan_from_binding(
-                script_plan, timeline, images_dir=args.images)
+                script_plan, timeline, images_dir=args.images, words=words,
+                require_images=args.only_section is None, overrides=overrides)
+
+            if args.only_section is not None:
+                gone = [Path(e["path"]).name for e in entries
+                        if int(e["section"]) == args.only_section
+                        and not Path(e["path"]).exists()
+                        and not list(Path(args.images).glob(
+                            Path(e["path"]).stem + ".*"))]
+                if gone:
+                    raise SystemExit(
+                        f"{len(gone)} picture(s) missing from section "
+                        f"{args.only_section}:\n  " + "\n  ".join(gone[:15]))
+                print(f"  section {args.only_section} only: its pictures are "
+                      f"checked, the other sections are timed but not required")
             print(f"  bound from {sp_path.name} "
                   f"(fingerprint {script_plan.get('fingerprint')})")
+
+            # CARRY THE MOTION MARK AND FIND ITS CLIP. The plan decides WHICH
+            # slots are motion; the motion/ folder decides which of those can
+            # actually be rendered as one yet. Resolving here means the render
+            # plan on disk is the single description of the build, rather than
+            # the mux having to re-read the script plan and re-derive it.
+            # Shared with the timeline editor's live recompute - see
+            # motionplan.attach_kinds - so a slot toggled still/motion there
+            # attaches identically here.
+            attach = motionplan.attach_kinds(
+                entries, script_plan, proj,
+                motion_overrides=(overrides or {}).get("motion"))
+            for w in attach["warnings"]:
+                print(f"  {w}")
+            n_ready = attach["n_ready"]
+            n_motion = attach["n_motion"]
+            if n_motion:
+                print(f"  {n_motion} motion slot(s); {n_ready} clip(s) present "
+                      f"in {proj.motion}")
+
+                # PROVE THE RE-CUT WORKED. The refine above targets the window;
+                # this measures whether it actually landed there, on the same
+                # holds the render will use. Without this the plan could claim
+                # 11 motion slots while 5 of them are physically uncoverable by
+                # a 4.0s clip - which is precisely the bug that shipped.
+                bad = [e for e in entries if e["kind"] == "video"
+                       and not pacing.fits_motion(float(e["duration"]))]
+                fits = n_motion - len(bad)
+                print(f"  motion slots inside the "
+                      f"{pacing.MOTION_SLOT_MIN}-{pacing.MOTION_CLIP_S}s window: "
+                      f"{fits}/{n_motion}")
+                for e in bad:
+                    print(f"    slot {e['index']:>4} s{e['section']} "
+                          f"{e['duration']:.2f}s - a {pacing.MOTION_CLIP_S}s clip "
+                          f"cannot cover this")
+                if bad:
+                    print(f"  {len(bad)} motion slot(s) could not be fitted. The "
+                          f"script has no cut there that lands in the window - "
+                          f"lower --motion-seconds, or accept them as stills.")
         else:
             why = ("--ignore-plan" if args.ignore_plan else "no script_plan.json")
             print(f"  {why} - dividing each section between the images present")
@@ -659,7 +894,8 @@ def main() -> None:
         if vo_path.exists():
             info = sf.info(str(vo_path))
             audio_s = info.frames / float(info.samplerate)
-        checks, fails = imageplan.verify(entries, timeline, audio_s)
+        checks, fails = imageplan.verify(entries, timeline, audio_s,
+                                         only_section=args.only_section)
         print("\n  sync check:")
         for c in checks:
             print(f"    {c}")
@@ -684,6 +920,31 @@ def main() -> None:
         if not plan_path.exists() or not vo_path.exists():
             raise SystemExit("run --stage voice and --stage plan first")
         entries = json.loads(plan_path.read_text(encoding="utf-8"))
+
+        # ONE SECTION ONLY. The slots are already contiguous and in order, so
+        # the section's video is just its slice of them - but the voiceover has
+        # to be cut to the same span, or the pictures would play against the
+        # wrong words. The slice is taken from the plan's own timings, never
+        # recomputed, so what renders is exactly what the sync check passed.
+        if args.only_section is not None:
+            picked = [e for e in entries if int(e["section"]) == args.only_section]
+            if not picked:
+                raise SystemExit(
+                    f"no slots in section {args.only_section} - the plan has "
+                    f"{sorted({int(e['section']) for e in entries})}")
+            t0 = min(float(e["start"]) for e in picked)
+            t1 = max(float(e["end"]) for e in picked)
+            cut = args.work / f"_section{args.only_section}_vo.wav"
+            clips._run(
+                ["ffmpeg", "-y", "-i", str(vo_path), "-ss", f"{t0:.3f}",
+                 "-to", f"{t1:.3f}", "-c:a", "pcm_s16le", str(cut)],
+                f"trimming voiceover to section {args.only_section}")
+            print(f"  section {args.only_section} only: {len(picked)} slot(s), "
+                  f"{t0:.2f}s-{t1:.2f}s ({t1 - t0:.2f}s)")
+            entries, vo_path = picked, cut
+            args.out = args.out.with_name(
+                f"{args.out.stem}_section{args.only_section}{args.out.suffix}")
+
         mux(entries, vo_path, args.out, args.work, args.width, args.height,
             args.fps, args.motion)
 

@@ -1,0 +1,56 @@
+{
+  "_note": "Written by run_script.py / run_scenes.py from pipeline/config.py. The notebook reads this so a redrawn frame uses the same prompt as the original render. Edit pipeline/config.py, not this file.",
+  "character_bible": "one stick figure: a plain bald circle for the head, one single straight vertical stroke for the body, four bare straight strokes for the two arms and two legs, every stroke the same even thickness",
+  "style_prefix": "bold minimal stick-figure drawing made with a thick black marker pen, heavy black outlines, flat solid colour fills, plain white background, the figure drawn large and filling most of the height of the picture, ",
+  "style_tail": ", every filled area is one flat block of colour, no shading, no gradients, clean minimal composition, no writing anywhere, no text, no letters, no words, no numbers, no labels, no captions, no watermark, no signature",
+  "lora_trigger": "",
+  "shots": {
+    "character-moment": {
+      "character": true,
+      "clause": "one figure alone, medium shot, pure white background wall, large areas of empty white space, the figure standing with empty space below it"
+    },
+    "two-character": {
+      "character": true,
+      "clause": "two figures facing each other on the same floor line, medium-wide shot, empty space between them, pure white background wall, large areas of empty white space, the figure standing with empty space below it"
+    },
+    "symbolic-metaphor": {
+      "character": true,
+      "clause": "one figure and one large symbolic object that dwarfs it, wide shot, the object placed off to one side and drawn as a bold flat illustration: thick black outlines, interior detail drawn as more black outlines, every enclosed area filled with one flat solid colour from rust red, warm wood brown, dark brown, teal, navy, forest green, olive, warm beige or yellow, with no shading, no gradients and no highlights, pure white background wall, large areas of empty white space, the figure standing with empty space below it"
+    },
+    "object-focus": {
+      "character": false,
+      "clause": "one large object alone resting directly on a simple flat surface drawn with the same thick black outline, drawn as a bold flat illustration: thick black outlines, interior detail drawn as more black outlines, every enclosed area filled with one flat solid colour from rust red, warm wood brown, dark brown, teal, navy, forest green, olive, warm beige or yellow, with no shading, no gradients and no highlights, no people anywhere in the frame, pure white background wall, large areas of empty white space, the figure standing with empty space below it"
+    },
+    "icon-grid": {
+      "character": false,
+      "clause": "three to five small separate objects spaced apart, each resting on its own small flat base drawn with the same thick black outline, each drawn as a bold flat illustration: thick black outlines, interior detail drawn as more black outlines, every enclosed area filled with one flat solid colour from rust red, warm wood brown, dark brown, teal, navy, forest green, olive, warm beige or yellow, with no shading, no gradients and no highlights, no people anywhere in the frame, pure white background, no floor line, no wall, large areas of empty white space"
+    },
+    "data-chart": {
+      "character": false,
+      "clause": "a simple hand-drawn bar chart, the bars drawn as a bold flat illustration: thick black outlines, interior detail drawn as more black outlines, every enclosed area filled with one flat solid colour from rust red, warm wood brown, dark brown, teal, navy, forest green, olive, warm beige or yellow, with no shading, no gradients and no highlights, no people anywhere in the frame, pure white background, no floor line, no wall, large areas of empty white space"
+    },
+    "typographic": {
+      "character": false,
+      "clause": "almost the entire picture left blank and empty, one small simple shape low in the corner drawn as a bold flat illustration: thick black outlines, interior detail drawn as more black outlines, every enclosed area filled with one flat solid colour from rust red, warm wood brown, dark brown, teal, navy, forest green, olive, warm beige or yellow, with no shading, no gradients and no highlights, nothing at all in the middle, no people anywhere in the picture, no border and no box drawn around the edges, pure white background, no floor line, no wall, large areas of empty white space"
+    }
+  },
+  "fallback_subject": {
+    "character-moment": "standing still facing forward",
+    "two-character": "two figures standing still facing each other",
+    "symbolic-metaphor": "standing still beside one large plain closed door",
+    "object-focus": "one plain cardboard box",
+    "icon-grid": "three plain simple circles spaced apart",
+    "data-chart": "three plain bars of different heights",
+    "typographic": "one small plain circle low in the corner"
+  },
+  "expressions": {
+    "deadpan": "two big round white eyes with large black pupils, one straight line mouth, a blank deadpan stare",
+    "rage": "two big round white eyes with large black pupils under thick black eyebrows angled down into a hard V, mouth wide open shouting",
+    "shock": "two huge round white eyes with large black pupils, mouth a small round open O of shock",
+    "smug": "two big white eyes with large black pupils half covered by heavy lids, one thick black eyebrow raised high, mouth a smug curve",
+    "worried": "two big round white eyes with large black pupils under thick black eyebrows tilted up in the middle, mouth a small worried curve",
+    "delight": "two eyes squeezed shut into thick black upward arcs, mouth open in a wide grin"
+  },
+  "default_expression": "deadpan",
+  "expressions_on": true
+}

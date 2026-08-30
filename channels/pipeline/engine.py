@@ -214,6 +214,7 @@ def call_model(model, prompt, system=None, max_tokens=4000, temperature=0, retri
     messages.append({"role": "user", "content": prompt})
 
     last = None
+    escalated = False
     for attempt in range(retries):
         try:
             resp = client().chat.completions.create(
@@ -233,6 +234,22 @@ def call_model(model, prompt, system=None, max_tokens=4000, temperature=0, retri
             choice = resp.choices[0]
             text = (choice.message.content or "").strip()
             if not text:
+                if choice.finish_reason == "length" and not escalated:
+                    # An empty body AT the length ceiling means the whole budget
+                    # was spent on invisible reasoning - tokens that bill and time
+                    # like output but never reach `text`. REASONING only lists
+                    # models this has been MEASURED for (see the note above); a
+                    # model with no entry there defaults to whatever OpenRouter
+                    # picks, which can be reasoning-on. That is a different failure
+                    # than a genuine overload, so the backoff below would just
+                    # fail identically - force reasoning off and widen the budget
+                    # once instead of losing a run that got this far.
+                    escalated = True
+                    extra["reasoning"] = {"enabled": False}
+                    max_tokens = min(max_tokens * 2, 16000)
+                    print(f"    [retry {attempt + 1}/{retries}] empty response at the length "
+                          f"ceiling - forcing reasoning off, raising max_tokens to {max_tokens}")
+                    continue
                 raise ProviderError(
                     f"Empty response (finish_reason={choice.finish_reason!r}). "
                     f"If this is 'length', raise max_tokens."
@@ -291,6 +308,48 @@ def parse_json_response(raw: str):
     if start != -1 and end != -1:
         raw = raw[start:end + 1]
     return json.loads(raw)
+
+
+def call_model_json(model, prompt, system=None, max_tokens=4000, temperature=0,
+                    retries=4, repair_retries=2):
+    """call_model + parse_json_response, with one extra layer: if the reply does
+    not parse, ask the model to fix its own output instead of losing the whole
+    run to it.
+
+    A response failing to parse is usually one stray unescaped quote or newline
+    inside a string value - not the model getting the content wrong - and by the
+    time it happens the API call is already paid for. Losing evidence.run() (or
+    any other gate) to that, forty seconds and one billed call into a run, is a
+    worse failure than spending one more small call asking for a fix. Every
+    gate in this pipeline shares this exact call_model -> parse_json_response
+    shape, so the retry lives here once rather than at each of the eight sites
+    that would otherwise duplicate it.
+    """
+    raw = call_model(model, prompt, system=system, max_tokens=max_tokens,
+                     temperature=temperature, retries=retries)
+    try:
+        return parse_json_response(raw)
+    except json.JSONDecodeError as e:
+        last_err, last_raw = e, raw
+        for attempt in range(repair_retries):
+            print(f"  malformed JSON from the model ({last_err}) - "
+                  f"asking it to fix (attempt {attempt + 1}/{repair_retries})...")
+            fix_prompt = (
+                "Your previous reply was not valid JSON. It failed to parse with this "
+                f"error: {last_err}\n\n"
+                "Return ONLY the corrected, valid JSON - no explanation, no code fence, "
+                "no leading or trailing text. Preserve every field and value from your "
+                "original reply; fix only what breaks parsing (commonly: an unescaped "
+                "quote or a raw newline inside a string value).\n\n"
+                f"YOUR PREVIOUS REPLY:\n{last_raw}"
+            )
+            try:
+                last_raw = call_model(model, fix_prompt, system=system,
+                                      max_tokens=max_tokens, temperature=0, retries=retries)
+                return parse_json_response(last_raw)
+            except json.JSONDecodeError as e2:
+                last_err = e2
+        raise last_err
 
 
 def _unknown_slug_message(m: str) -> str:

@@ -1,0 +1,348 @@
+{
+  "evidence_type": "controlled_experiment",
+  "evidence_type_reason": "Source 1 describes an EEG experiment comparing photic sneezers and controls exposed to standardized visual stimuli with measured cortical outcomes, though the broader topic is surrounded by unresolved competing hypotheses.",
+  "named_entities": [
+    {
+      "kind": "study",
+      "value": "When the Sun Prickles Your Nose: an EEG study identifying neural bases of photic sneezing",
+      "source": 1
+    },
+    {
+      "kind": "journal",
+      "value": "PLOS ONE",
+      "source": 1
+    },
+    {
+      "kind": "researcher",
+      "value": "Langer N.",
+      "source": 3
+    },
+    {
+      "kind": "researcher",
+      "value": "Beeli G.",
+      "source": 3
+    },
+    {
+      "kind": "researcher",
+      "value": "Jancke L.",
+      "source": 3
+    },
+    {
+      "kind": "year",
+      "value": "2010",
+      "source": 3
+    },
+    {
+      "kind": "researcher",
+      "value": "Collie WR",
+      "source": 1
+    },
+    {
+      "kind": "researcher",
+      "value": "Sedan",
+      "source": 1
+    },
+    {
+      "kind": "researcher",
+      "value": "Lang & Howland",
+      "source": 1
+    },
+    {
+      "kind": "researcher",
+      "value": "Brubacker",
+      "source": 1
+    },
+    {
+      "kind": "researcher",
+      "value": "Songa & Cingi / Songu M., Cingi C.",
+      "source": 1
+    },
+    {
+      "kind": "researcher",
+      "value": "Forrester J.M.",
+      "source": 3
+    },
+    {
+      "kind": "researcher",
+      "value": "Breitenbach R.A., Swisher P.K., Kim M.K., Patel B.S.",
+      "source": 3
+    },
+    {
+      "kind": "researcher",
+      "value": "Benbow E.W.",
+      "source": 3
+    },
+    {
+      "kind": "year",
+      "value": "1985",
+      "source": 3
+    },
+    {
+      "kind": "year",
+      "value": "1993",
+      "source": 3
+    },
+    {
+      "kind": "year",
+      "value": "1991",
+      "source": 3
+    },
+    {
+      "kind": "institution",
+      "value": "NCBI/National Center for Biotechnology Information",
+      "source": 3
+    },
+    {
+      "kind": "institution",
+      "value": "Child Mind Institute, New York",
+      "source": 3
+    },
+    {
+      "kind": "year",
+      "value": "2017",
+      "source": 2
+    },
+    {
+      "kind": "year",
+      "value": "2019",
+      "source": 2
+    },
+    {
+      "kind": "researcher",
+      "value": "Thomas C. Weiss",
+      "source": 4
+    },
+    {
+      "kind": "year",
+      "value": "2014",
+      "source": 4
+    },
+    {
+      "kind": "researcher",
+      "value": "Aristotle",
+      "source": 4
+    }
+  ],
+  "hard_numbers": [
+    {
+      "value": "one of every four individuals",
+      "means": "prevalence of sneeze/prickling sensation upon bright light exposure",
+      "source": 1
+    },
+    {
+      "value": "24%",
+      "means": "prevalence of photic sneezing in a Swedish blood donor study",
+      "source": 1
+    },
+    {
+      "value": "triple the risk",
+      "means": "increase in sneeze risk when driving out of a tunnel",
+      "source": 1
+    },
+    {
+      "value": "50%",
+      "means": "chance a child inherits the reflex if one parent has it",
+      "source": 2
+    },
+    {
+      "value": "18\u201335%",
+      "means": "estimated prevalence of photic sneeze reflex among Americans",
+      "source": 2
+    },
+    {
+      "value": "57%",
+      "means": "prevalence rate found in a 2017 German study",
+      "source": 2
+    },
+    {
+      "value": "2017",
+      "means": "year of German prevalence study",
+      "source": 2
+    },
+    {
+      "value": "2019",
+      "means": "year of paper linking photic sneeze reflex to trigeminocardiac reflex",
+      "source": 2
+    },
+    {
+      "value": "one in four",
+      "means": "individuals with a prickling nasal sensation who will actually sneeze in response to sunlight",
+      "source": 3
+    },
+    {
+      "value": "50%",
+      "means": "chance of inheriting ACHOO syndrome if one parent affected",
+      "source": 3
+    },
+    {
+      "value": "18-35%",
+      "means": "estimated global prevalence of photic sneeze reflex/ACHOO syndrome",
+      "source": 4
+    },
+    {
+      "value": "1 to 10 sneezes",
+      "means": "typical burst size when reflex is triggered",
+      "source": 4
+    },
+    {
+      "value": "24 hours",
+      "means": "maximum length of refractory period after a triggered bout",
+      "source": 4
+    },
+    {
+      "value": "2 to 15 sneezes",
+      "means": "sneezes in the 'satiation reflex' after large meals",
+      "source": 4
+    }
+  ],
+  "key_findings": [
+    {
+      "finding": "About one in four people report a sneeze or nose-prickling sensation when exposed to bright light.",
+      "source": 1,
+      "certainty": "established"
+    },
+    {
+      "finding": "An EEG study found photic sneezers show generally heightened visual cortex excitability (notably in the cuneus) compared to controls.",
+      "source": 1,
+      "certainty": "debated"
+    },
+    {
+      "finding": "Stronger nasal prickling sensations in photic sneezers were linked to activation in the insula and secondary somatosensory cortex.",
+      "source": 1,
+      "certainty": "debated"
+    },
+    {
+      "finding": "The researchers conclude the reflex is not a simple brainstem/spinal reflex but involves cortical brain areas, contradicting prior theories.",
+      "source": 1,
+      "certainty": "debated"
+    },
+    {
+      "finding": "A Swedish blood donor study, described as one of the largest representative samples, found photic sneezing in about 24% of subjects.",
+      "source": 1,
+      "certainty": "established"
+    },
+    {
+      "finding": "Photic sneezing has been observed in babies, suggesting congenital factors may be involved.",
+      "source": 1,
+      "certainty": "speculative"
+    },
+    {
+      "finding": "Collie et al. proposed autosomal dominant inheritance (naming it ACHOO syndrome) based on higher prevalence among relatives of photic sneezers, but the authors of Source 1 note this could be biased by self-reporting sensitivity.",
+      "source": 1,
+      "certainty": "debated"
+    },
+    {
+      "finding": "It has been hypothesized (not established) that photic sneezing could partly cause conduction deafness, mediastinorrhexis, or cerebral hemorrhage.",
+      "source": 1,
+      "certainty": "speculative"
+    },
+    {
+      "finding": "A sneeze-evoking centre has been identified in the medulla of cats but not yet confirmed in humans.",
+      "source": 1,
+      "certainty": "debated"
+    },
+    {
+      "finding": "Driving out of a tunnel can triple the risk of sneezing.",
+      "source": 1,
+      "certainty": "debated"
+    },
+    {
+      "finding": "The photic sneeze reflex affects an estimated 18-35% of Americans, with some studies (a 2017 German study) finding prevalence as high as 57%.",
+      "source": 2,
+      "certainty": "debated"
+    },
+    {
+      "finding": "A study found no link between ethnicity and prevalence of the photic sneeze reflex.",
+      "source": 2,
+      "certainty": "established"
+    },
+    {
+      "finding": "A 2019 paper argues the fifth and tenth brainstem cranial nerves are involved, drawing a parallel to the trigeminocardiac reflex (TCR).",
+      "source": 2,
+      "certainty": "speculative"
+    },
+    {
+      "finding": "Researchers have linked TCR to SIDS, stroke, and sleep disorders, raising the possibility (not proven) that photic sneeze reflex shares risk with these conditions.",
+      "source": 2,
+      "certainty": "speculative"
+    },
+    {
+      "finding": "There is no cure or medical treatment for the photic sneeze reflex; management is avoidance-based (hats, sunglasses, visors).",
+      "source": 2,
+      "certainty": "established"
+    },
+    {
+      "finding": "The genetic basis of ACHOO syndrome is not yet known despite its apparent autosomal dominant inheritance pattern.",
+      "source": 3,
+      "certainty": "debated"
+    },
+    {
+      "finding": "Clinical reproduction of the reflex by having a patient look at bright light is unreliable.",
+      "source": 3,
+      "certainty": "debated"
+    },
+    {
+      "finding": "The reflex may pose combat/aviation pilot risk, per named military medicine research.",
+      "source": 3,
+      "certainty": "debated"
+    },
+    {
+      "finding": "ACHOO reflex can be triggered by cold air or strong flavors in addition to light, per one source.",
+      "source": 4,
+      "certainty": "speculative"
+    },
+    {
+      "finding": "A related 'satiation reflex' causes uncontrollable sneezing bouts after large meals, independent of food allergy.",
+      "source": 4,
+      "certainty": "speculative"
+    },
+    {
+      "finding": "The first mention of the syndrome is 'most likely' in work attributed to Aristotle.",
+      "source": 4,
+      "certainty": "speculative"
+    },
+    {
+      "finding": "Propofol-sedated patients undergoing periocular injection commonly show uncontrollable sneezing bouts, posing risk of eye injury from head movement during needle insertion.",
+      "source": 4,
+      "certainty": "established"
+    }
+  ],
+  "competing_explanations": [
+    {
+      "explanation": "Optical-trigeminal summation theory: crosstalk between optic and trigeminal nerves at the mesencephalon causes cross-activation leading to sneeze.",
+      "source": 1
+    },
+    {
+      "explanation": "Parasympathetic generalization theory: activation of one parasympathetic branch (e.g., pupillary constriction from light) spreads to cause nasal congestion/secretion and a tickling sensation leading to sneeze.",
+      "source": 1
+    },
+    {
+      "explanation": "Parasympathetic hypersensitivity theory: photic sneezers may have heightened parasympathetic sensitivity specifically in the nasal mucosa.",
+      "source": 1
+    },
+    {
+      "explanation": "Cortical theory (this study's own conclusion): enhanced visual cortex excitability plus co-activation of somatosensory cortical areas, not a brainstem-only reflex.",
+      "source": 1
+    },
+    {
+      "explanation": "Trigeminal nerve 'malfunction' theory: a congenital cross-wiring between optic nerve and trigeminal nerve triggers sneeze upon over-stimulation.",
+      "source": 4
+    },
+    {
+      "explanation": "TCR-linked theory: fifth and tenth cranial nerve involvement analogous to the trigeminocardiac reflex.",
+      "source": 2
+    }
+  ],
+  "mechanism": "Source 1's EEG findings suggest photic sneezers have heightened excitability in the visual cortex (cuneus) and that stronger nasal prickling correlates with insula and secondary somatosensory cortex activation, implicating cortical rather than purely brainstem/spinal processing. Older rival theories propose either direct optic-trigeminal nerve crosstalk in the mesencephalon, or a spreading ('generalized') activation of parasympathetic nerve branches (from pupil constriction/lacrimation to nasal congestion) that produces a tickling sensation and triggers the sneeze motor response. Source 4 separately describes a proposed trigeminal nerve 'malfunction' where over-stimulation of the optic nerve triggers the nearby trigeminal nerve.",
+  "the_common_myth": "That the photic sneeze reflex is a simple, purely brainstem/spinal-level reflex (like an ordinary irritant-triggered sneeze) fully explained by direct optic-trigeminal nerve crosstalk.",
+  "the_best_counter_evidence": "The EEG study found photic sneezing involves specific higher cortical areas (enhanced visual cortex excitability in the cuneus, plus insula and secondary somatosensory cortex activation) \u2014 'in stark contrast to many theories' that treat it as a simple brainstem-level reflex.",
+  "gaps": [
+    "No source identifies a specific gene responsible for ACHOO syndrome; the genetic basis is explicitly stated as unknown.",
+    "No sources provide sample sizes or statistical significance values (p-values, participant counts) for the EEG study itself.",
+    "No source confirms a documented real-world case of photic sneezing causing a plane crash or fatal driving accident \u2014 only hypothetical/risk-based statements.",
+    "No source provides direct evidence that photic sneezing causes conduction deafness, mediastinorrhexis, or cerebral hemorrhage \u2014 these are explicitly labeled hypotheses.",
+    "No sources give a confirmed evolutionary or adaptive purpose for the reflex.",
+    "The claim that Aristotle first mentioned the phenomenon is stated only as 'most likely,' with no citation or quote given.",
+    "No source gives details of the 2019 TCR-linkage paper's authors, methodology, or sample."
+  ]
+}

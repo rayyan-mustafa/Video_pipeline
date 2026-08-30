@@ -1,0 +1,152 @@
+[
+  {
+    "sentence": "Picture someone stepping out of a cave mouth at dawn, forty thousand years ago, into a sudden wall of light after a night of darkness and smoke.",
+    "section": 5,
+    "reason": "the number 'thousand' does not appear in any fetched source"
+  },
+  {
+    "sentence": "None of that stops the same wiring from running underneath, quiet, waiting for the first window with real sun in it.",
+    "section": 1,
+    "reason": "stacked modifiers ('underneath, quiet, waiting for') - one adjective per noun"
+  },
+  {
+    "sentence": "Some drivers coming out of a tunnel sneeze at triple the normal rate.",
+    "section": 1,
+    "reason": "2 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+  },
+  {
+    "sentence": "The best guess points to Aristotle, though no one can point to the line where he said it.",
+    "section": 4,
+    "reason": "9 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+  },
+  {
+    "sentence": "They sat subjects down and exposed them to bright light, then watched the brain's electrical response in real time.",
+    "section": 1,
+    "reason": "8 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+  },
+  {
+    "sentence": "A 2019 paper proposes that two cranial nerves are doing this together, the fifth and the tenth, the same pairing implicated in something called the trigeminocardiac reflex.",
+    "section": 2,
+    "reason": "5 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+  },
+  {
+    "sentence": "Nobody has found the gene.",
+    "section": 3,
+    "reason": "2 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+  },
+  {
+    "sentence": "The entire treatment plan, as it stands today, is a hat, sunglasses, a visor.",
+    "section": 2,
+    "reason": "2 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+  },
+  {
+    "sentence": "That is roughly one in every four people you have ever stood next to in a queue outside on a sunny day.",
+    "section": 1,
+    "reason": "three consecutive sentences of similar length ([25, 22, 23]) - vary the rhythm"
+  },
+  {
+    "sentence": "Picture someone stepping out of a cave mouth at dawn, forty thousand years ago, into a sudden wall of light after a night of darkness and smoke.",
+    "section": 5,
+    "reason": "three consecutive sentences of similar length ([26, 27, 26]) - vary the rhythm"
+  },
+  {
+    "sentence": "",
+    "section": 1,
+    "reason": "Section 1 is 459 words, target 90-110"
+  },
+  {
+    "sentence": "",
+    "section": 2,
+    "reason": "Section 2 is 144 words, target 200-245"
+  },
+  {
+    "sentence": "",
+    "section": 3,
+    "reason": "Section 3 is 104 words, target 250-300"
+  },
+  {
+    "sentence": "",
+    "section": 4,
+    "reason": "Section 4 is 33 words, target 200-250"
+  },
+  {
+    "sentence": "",
+    "section": 5,
+    "reason": "Section 5 is 98 words, target 280-330"
+  },
+  {
+    "sentence": "",
+    "section": 6,
+    "reason": "Section 6 (Impactful Outro) is missing entirely"
+  },
+  {
+    "sentence": "For most of medical history this got filed as a curiosity, a footnote, a strange crossed wire and nothing more.",
+    "section": 1,
+    "reason": "Section 1 sentence is 20 words (max 14) - the hook must stay staccato"
+  },
+  {
+    "sentence": "Doctors assumed the optic nerve and the trigeminal nerve just sat too close together in the brainstem and occasionally short-circuited each other.",
+    "section": 1,
+    "reason": "Section 1 sentence is 22 words (max 14) - the hook must stay staccato"
+  },
+  {
+    "sentence": "It was the visual cortex, and a region called the cuneus, running hotter in photic sneezers than in everyone else.",
+    "section": 1,
+    "reason": "Section 1 sentence is 20 words (max 14) - the hook must stay staccato"
+  },
+  {
+    "sentence": "A team behind a study called \"When the Sun Prickles Your Nose\" ran EEG scans on people with the reflex and people without it.",
+    "section": 1,
+    "reason": "Section 1 sentence is 24 words (max 14) - the hook must stay staccato"
+  },
+  {
+    "sentence": "They sat subjects down and exposed them to bright light, then watched the brain's electrical response in real time.",
+    "section": 1,
+    "reason": "Section 1 sentence is 19 words (max 14) - the hook must stay staccato"
+  },
+  {
+    "sentence": "The strongest number in the whole body of research is blunt: about 24% of people in a large Swedish blood donor sample sneeze this way.",
+    "section": 1,
+    "reason": "Section 1 sentence is 25 words (max 14) - the hook must stay staccato"
+  },
+  {
+    "sentence": "That is roughly one in every four people you have ever stood next to in a queue outside on a sunny day.",
+    "section": 1,
+    "reason": "Section 1 sentence is 22 words (max 14) - the hook must stay staccato"
+  },
+  {
+    "sentence": "The sneezers also showed something else \u2014 nasal prickling that felt stronger correlated with activity in the insula and the secondary somatosensory cortex.",
+    "section": 1,
+    "reason": "Section 1 sentence is 23 words (max 14) - the hook must stay staccato"
+  },
+  {
+    "sentence": "The researchers themselves call it a challenge to older theories, not a replacement for them.",
+    "section": 1,
+    "reason": "Section 1 sentence is 15 words (max 14) - the hook must stay staccato"
+  },
+  {
+    "sentence": "You are watching two separate nerve systems argue with each other in real time. [S1,S2|1,2]",
+    "section": 1,
+    "reason": "Section 1 sentence is 15 words (max 14) - the hook must stay staccato"
+  },
+  {
+    "sentence": "You are sitting somewhere ordinary right now, a couch, a bus seat, a desk under a fluorescent light.",
+    "section": 1,
+    "reason": "Section 1 sentence is 18 words (max 14) - the hook must stay staccato"
+  },
+  {
+    "sentence": "None of that stops the same wiring from running underneath, quiet, waiting for the first window with real sun in it.",
+    "section": 1,
+    "reason": "Section 1 sentence is 21 words (max 14) - the hook must stay staccato"
+  },
+  {
+    "sentence": "It is a piece of you that answers to light the way your pupils do, faster than you can think about it, and nobody fully knows why your brain wired it that way. [S1,S2|1,2]",
+    "section": 1,
+    "reason": "Section 1 sentence is 34 words (max 14) - the hook must stay staccato"
+  },
+  {
+    "sentence": "What else in your face is talking to something it was never supposed to touch?",
+    "section": 1,
+    "reason": "Section 1 sentence is 15 words (max 14) - the hook must stay staccato"
+  }
+]

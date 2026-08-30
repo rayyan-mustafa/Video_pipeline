@@ -1,0 +1,328 @@
+{
+  "fact": [
+    {
+      "sentence": "No dust touched your nose.",
+      "reason": "Source 1 does not contain this specific phrasing or claim.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "No irritant, no infection, nothing physical at all.",
+      "reason": "Source 1 does not contain this specific phrasing or claim.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Yet one of every four people sneeze anyway.",
+      "reason": "Source 1 states 'about one of every four individuals' experiences the reflex, but the claim says 'sneeze anyway' which is not directly supported; the source describes a prickling sensation or sneeze, not that all one in four sneeze.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Drivers leaving a tunnel sneeze at triple the normal rate.",
+      "reason": "Source 1 mentions 'driving out of a tunnel... can triple the risk of sneezing', not 'sneeze at triple the normal rate'. The claim misstates the source's wording.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Light alone did that.",
+      "reason": "Source 1 does not contain this specific phrasing or claim.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "The first mention of sneezing at bright light likely traces to Aristotle.",
+      "reason": "Source 4 says 'The first mention of this syndrome is most likely in the later work attributed to Aristotle', which supports the claim. No issue.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "For centuries, doctors filed it away as a curiosity, a harmless quirk of the nervous system.",
+      "reason": "Source 4 does not contain this specific phrasing or claim.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Sneezing was supposed to mean irritation: dust, virus, pepper, something physically wrong in the nose.",
+      "reason": "Source 1 mentions sneezing induced by 'contact with infectious agents or inhalation of irritant dusts and chemical fumes', but does not mention 'virus' or 'pepper' or the phrasing 'something physically wrong in the nose'. The claim adds specifics not in the source.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Then researchers noticed the trigger wasn't touch at all, but light itself, and the reflex answered a checkerboard flash before anything reached the nostrils.",
+      "reason": "Source 1 describes exposure to a 'standard checkerboard stimulus' and 'bright flashing lights', but does not state that the reflex answered a checkerboard flash 'before anything reached the nostrils' or that researchers 'noticed the trigger wasn't touch at all'. The claim adds narrative not directly supported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Pilots and combat aviators live with this calculation daily, sun glare timed against the instant they need both hands steady.",
+      "reason": "Source 3 mentions 'airline pilots may be at risk' and references a combat pilot study, but does not contain the specific phrasing 'live with this calculation daily, sun glare timed against the instant they need both hands steady'. The claim adds narrative not in the source.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Drivers pulling out of a tunnel carry triple the ordinary risk of a sneeze arriving right as their eyes adjust.",
+      "reason": "Source 1 says 'driving out of a tunnel... can triple the risk of sneezing', but does not mention 'right as their eyes adjust'. The claim adds a detail not in the source.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "One of every four people carries this reflex, passed down with a coin-flip chance from an affected parent.",
+      "reason": "Source 1 says 'about one of every four individuals' and mentions autosomal dominant inheritance; Source 2 says '18\u201335%' and '50% chance'. The claim combines these but 'one of every four' is supported by Source 1, and 'coin-flip chance' is supported by both. No issue.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "\"Not dust. Not irritation. Light did this.\"",
+      "reason": "Source 1 does not contain this exact quote or phrasing.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Researchers Langer, Beeli, and Jancke wanted to know why.",
+      "reason": "Source 1 lists Langer, Beeli, and Jancke as authors; Source 3 references Langer et al. The claim is supported. No issue.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "They sat photic sneezers and non-sneezers in front of a screen, wired their scalps, and hit them with bursts of flashing light.",
+      "reason": "Source 1 describes exposing subjects to a 'standard checkerboard stimulus' and 'bright flashing lights' while recording EEG, which implies wiring scalps. The claim is a reasonable paraphrase. No issue.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Inside the sneezers' brains, the visual cortex lit up harder than it should have.",
+      "reason": "Source 1 states 'generally enhanced excitability of the visual cortex... in photic sneezers compared with control subjects'. The claim is a reasonable paraphrase. No issue.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "One of every four people carries some version of this wiring.",
+      "reason": "Source 1 says 'about one of every four individuals' experiences the reflex, but does not mention 'wiring'. The claim adds a metaphorical term not in the source.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "It spread into the nose, into the touch centers of the brain, until a beam of light felt like a feather under the skin.",
+      "reason": "Source 1 mentions activation in insula and secondary somatosensory cortex associated with prickling sensation, but does not say 'spread into the nose' or 'felt like a feather under the skin'. The claim adds specifics not in the source.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "The reflex, they concluded, is not a simple twitch from the brainstem.",
+      "reason": "Source 1 states 'not a classical reflex that occurs only at a brainstem or spinal cord level'. The claim is a reasonable paraphrase. No issue.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "It is cortical, deliberate almost, a whole network answering a question nobody asked it.",
+      "reason": "Source 1 says it 'involves also specific cortical areas', but does not say 'deliberate almost' or 'a whole network answering a question nobody asked it'. The claim adds narrative not in the source.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Picture a man standing at the mouth of a cave at dawn, having spent the night in near-total dark, and the moment he crosses into open light his eyes seize and his nose fires without warning.",
+      "reason": "Source 1 does not contain this specific scenario or phrasing.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "His hands are full, maybe holding a spear or a child, and for that one instant his whole body convulses around a sneeze he never chose to make.",
+      "reason": "Source 1 does not contain this specific scenario or phrasing.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "A sneeze this violent costs energy and breaks focus for a fraction of a second, and the body only keeps a reflex that expensive if the alternative was worse.",
+      "reason": "Source 1 does not discuss energy cost or evolutionary reasoning; Source 2 does not either. The claim is not supported by either cited source.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "The trigeminal nerve sits so close to the optic nerve that a signal meant for one spills into the other, and nobody has ever fully explained why some people got wired this way and most did not.",
+      "reason": "Source 2 mentions the trigeminal nerve and optic nerve in the context of the trigeminocardiac reflex, but does not say 'sits so close' or 'signal meant for one spills into the other'. Source 4 mentions 'malfunction in nerve signals in the fifth cranial nerve' and 'over-stimulation of their optic nerve triggers their trigeminal nerve', but the claim's phrasing is not directly supported by Source 2 or 4. The claim adds specifics not in the cited sources.",
+      "kind": "fact"
+    }
+  ],
+  "smuggled": [
+    {
+      "sentence": "The textbook answer says dust and irritants trigger sneezes.",
+      "reason": "states as fact that the textbook answer is that dust and irritants trigger sneezes; sources do not support this as a universal textbook claim, though they mention sneezing is often induced by infectious agents or irritants, but this is presented as a definitive factual assertion about what textbooks say.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "Wrong.",
+      "reason": "states as fact that the previous statement is incorrect; this is a factual assertion that the textbook answer is wrong, which is not supported by the sources as they do not claim the textbook answer is wrong.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "What decides whether a nose reacts to light instead of dust, and what that switch reveals about the wiring underneath.",
+      "reason": "states as fact that there is a switch that decides whether a nose reacts to light instead of dust; sources do not support the existence of such a switch, as the mechanism is not fully understood.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "Picture a dimmer switch that only two people in your family own, turned up past where everyone else's stops.",
+      "reason": "states as fact that the photic sneeze reflex is like a dimmer switch owned by only two people in a family; sources do not support this specific analogy or the claim about inheritance pattern being limited to two people.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "The activation did not stay in the eyes.",
+      "reason": "states as fact that activation did not stay in the eyes; sources support that the reflex involves cortical areas beyond the eyes, but this is presented as a factual claim about a specific event.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "Inside your skull, the optic nerve and the trigeminal nerve run side by side, one carrying brightness, the other carrying touch from your face.",
+      "reason": "states as fact that the optic and trigeminal nerves run side by side; sources mention crosstalk between optic and trigeminal nerves but do not state they run side by side in the skull.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "They sit close enough to touch each other.",
+      "reason": "states as fact that the nerves sit close enough to touch; sources do not support this specific anatomical claim.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "A strong flash overloads the optic line, and the surge jumps the gap into the trigeminal line before your eyes finish adjusting.",
+      "reason": "states as fact that a strong flash causes a surge to jump the gap; sources propose the optical-trigeminal summation theory as a hypothesis, not a confirmed fact.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "Your visual cortex fires first, then your somatosensory cortex reads that stray signal as a tickle behind your nostrils.",
+      "reason": "states as fact the sequence of cortical activation; sources suggest co-activation of somatosensory areas but do not confirm this specific sequence as fact.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "The whole exchange finishes in a fraction of a second, faster than you can blink it away.",
+      "reason": "states as fact the timing of the exchange; sources do not provide specific timing for this process.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "That crossed wire sits behind your eyes right now, armed for the next bright window you walk into.",
+      "reason": "states as fact that a crossed wire exists behind the eyes; sources do not support the existence of a literal crossed wire.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "Light did that, not irritation.",
+      "reason": "states as fact that light caused the sneeze, not irritation; sources support that light triggers the reflex, but this is presented as a factual assertion about causation.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "That kind of forced, total-body reaction has to be worth something, or evolution would have quietly dropped it.",
+      "reason": "states as fact that the reflex must have evolutionary value; sources do not support this claim, as the purpose of the reflex is unknown.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "Right now, light is touching your eye again, and your nose is still deciding whether to answer.",
+      "reason": "states as fact that light is touching the viewer's eye and the nose is deciding; this is a factual claim about the viewer's current state that cannot be verified.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "The wiring underneath your face cannot tell a bulb from a sky.",
+      "reason": "states as fact that the wiring cannot distinguish between light sources; sources do not support this specific claim about neural discrimination.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "It only knows one nerve fired, and spilled into another.",
+      "reason": "states as fact that the nerve firing spills into another; sources propose crosstalk as a theory, not a confirmed fact.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "That crossed wire has been sitting inside you since before you had a say.",
+      "reason": "states as fact that the crossed wire has been present since birth; sources suggest congenital factors but do not confirm a literal crossed wire.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "It is not a flaw and it is not a gift.",
+      "reason": "states as fact that the reflex is neither a flaw nor a gift; this is a factual assertion about the nature of the reflex not supported by sources.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "It is a border two nerves share without asking, and your body redraws it every time.",
+      "reason": "states as fact that nerves share a border and the body redraws it; sources do not support this metaphorical claim as fact.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "No doctor put it there.",
+      "reason": "states as fact that no doctor put the reflex there; this is a factual claim about the origin not supported by sources.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "No thought asked for it.",
+      "reason": "states as fact that no thought asked for the reflex; this is a factual claim about consciousness not supported by sources.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "It simply exists, waiting for the next bright thing to find it.",
+      "reason": "states as fact that the reflex exists and waits; this is a factual claim about the nature of the reflex.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "What other wire in you is crossed?",
+      "reason": "states as fact that there are other crossed wires; this is a rhetorical question implying a factual claim about other neural cross-wirings not supported by sources.",
+      "kind": "smuggled-claim"
+    }
+  ],
+  "lint": [
+    {
+      "sentence": "Sneezing was supposed to mean irritation: dust, virus, pepper, something physically wrong in the nose.",
+      "section": 2,
+      "reason": "stacked modifiers ('virus, pepper, something physically') - one adjective per noun"
+    },
+    {
+      "sentence": "Researchers Langer, Beeli, and Jancke wanted to know why.",
+      "section": 3,
+      "reason": "stacked modifiers ('Langer, Beeli, and Jancke wanted') - one adjective per noun"
+    },
+    {
+      "sentence": "\"You are sitting somewhere quiet, indoors, maybe under a screen instead of a sun.\"",
+      "section": 6,
+      "reason": "stacked modifiers ('quiet, indoors, maybe under') - one adjective per noun"
+    },
+    {
+      "sentence": "No irritant, no infection, nothing physical at all.",
+      "section": 1,
+      "reason": "12 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "Researchers Langer, Beeli, and Jancke wanted to know why.",
+      "section": 3,
+      "reason": "4 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "The reflex, they concluded, is not a simple twitch from the brainstem.",
+      "section": 3,
+      "reason": "3 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "His hands are full, maybe holding a spear or a child, and for that one instant his whole body convulses around a sneeze he never chose to make.",
+      "section": 5,
+      "reason": "2 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "The trigeminal nerve sits so close to the optic nerve that a signal meant for one spills into the other, and nobody has ever fully explained why some people got wired this way and most did not.",
+      "section": 5,
+      "reason": "2 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "Drivers pulling out of a tunnel carry triple the ordinary risk of a sneeze arriving right as their eyes adjust.",
+      "section": 2,
+      "reason": "three consecutive sentences of similar length ([20, 20, 18]) - vary the rhythm"
+    },
+    {
+      "sentence": "One of every four people carries this reflex, passed down with a coin-flip chance from an affected parent.",
+      "section": 2,
+      "reason": "three consecutive sentences of similar length ([20, 18, 20]) - vary the rhythm"
+    },
+    {
+      "sentence": "Right now, light is touching your eye again, and your nose is still deciding whether to answer.",
+      "section": 6,
+      "reason": "three consecutive sentences of similar length ([17, 17, 14]) - vary the rhythm"
+    },
+    {
+      "sentence": "",
+      "section": 1,
+      "reason": "Section 1 is 69 words, target 90-110"
+    },
+    {
+      "sentence": "",
+      "section": 2,
+      "reason": "Section 2 is 145 words, target 200-245"
+    },
+    {
+      "sentence": "",
+      "section": 3,
+      "reason": "Section 3 is 151 words, target 250-300"
+    },
+    {
+      "sentence": "",
+      "section": 4,
+      "reason": "Section 4 is 151 words, target 200-250"
+    },
+    {
+      "sentence": "",
+      "section": 5,
+      "reason": "Section 5 is 194 words, target 280-330"
+    },
+    {
+      "sentence": "\"What other wire in you is crossed?\"",
+      "section": 6,
+      "reason": "the script does not end on a question"
+    }
+  ]
+}

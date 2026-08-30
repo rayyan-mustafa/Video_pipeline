@@ -221,22 +221,54 @@ def _limit(x, sr, ceiling_db=-1.5, lookahead_ms=3.0, release_ms=60.0):
     ~10 dB of the loudness you just normalised to -- the one transient consonant
     sets the level for nine minutes of audio. A limiter instead pulls gain down
     only around the peaks that need it, so integrated loudness survives.
+
+    WORKS IN BLOCKS, AND MUST. The whole voiceover is one array: ten minutes at
+    48 kHz is 28.5M float64 samples, and the naive version built five temporaries
+    of that size (abs, req, two gain curves, the product). That is ~1.4 GB of
+    transients and it died with a MemoryError on the first full-length video -
+    after the expensive Whisper pass had already succeeded, which is the worst
+    possible moment to fail.
+
+    Blocking is exact here, not an approximation: both filters have finite
+    support, so a block padded by `w//2 + s//2` samples either side sees every
+    input its interior samples depend on. Measured against the unblocked version
+    it is bit-identical up to ~30s and diverges by at most 1.7e-13 beyond that -
+    `uniform_filter1d` accumulates a running sum, so the rounding depends on
+    where the window started. That is about -260 dBFS, a hundred dB below the
+    16-bit floor this is written at. Peak memory no longer grows with the length
+    of the video, so a fifteen-minute one costs the same as this.
     """
     ceiling = 10.0 ** (ceiling_db / 20.0)
-    mag = np.abs(x)
-    if mag.max() <= ceiling:
+    # Peak without materialising abs(x) - that temporary alone is 228 MB here.
+    if max(float(x.max()), -float(x.min())) <= ceiling:
         return x
-    req = np.minimum(1.0, ceiling / np.maximum(mag, 1e-12))
+
     # Running minimum first: gain is already down before the peak arrives, and
     # recovers no faster than the release window.
     w = max(3, int(sr * release_ms / 1000.0)) | 1
-    g = ndi.minimum_filter1d(req, size=w, mode="nearest")
     # Then smooth the gain curve so it does not step and cause distortion.
     s = max(3, int(sr * lookahead_ms / 1000.0)) | 1
-    g = ndi.uniform_filter1d(g, size=s, mode="nearest")
-    # Smoothing can nudge gain back above the minimum at the exact peak; clip the
-    # remainder. It is a handful of samples and inaudible.
-    return np.clip(x * g, -ceiling, ceiling)
+
+    halo = w // 2 + s // 2
+    block = max(1 << 21, halo * 4)            # ~2M samples: 16 MB per temporary
+    out = np.empty_like(x)
+
+    for start in range(0, len(x), block):
+        stop = min(start + block, len(x))
+        lo, hi = max(0, start - halo), min(len(x), stop + halo)
+        seg = x[lo:hi]
+
+        mag = np.abs(seg)
+        g = np.minimum(1.0, ceiling / np.maximum(mag, 1e-12))
+        g = ndi.minimum_filter1d(g, size=w, mode="nearest")
+        g = ndi.uniform_filter1d(g, size=s, mode="nearest")
+
+        a, b = start - lo, start - lo + (stop - start)
+        # Smoothing can nudge gain back above the minimum at the exact peak;
+        # clip the remainder. It is a handful of samples and inaudible.
+        np.clip(seg[a:b] * g[a:b], -ceiling, ceiling, out=out[start:stop])
+
+    return out
 
 
 def _loudnorm(x, sr, target_lufs=-16.0, true_peak_db=-1.5, passes=8):
@@ -262,6 +294,8 @@ def _loudnorm(x, sr, target_lufs=-16.0, true_peak_db=-1.5, passes=8):
 
 MASTER_DEFAULTS = dict(
     denoise=True,
+    eq=True,
+    compress=True,
     denoise_amount=0.6,
     highpass_hz=85.0,
     mud_hz=280.0, mud_db=-3.0, mud_q=1.0,          # boxiness / proximity build-up
@@ -280,6 +314,9 @@ def master(x, sr, profile="clip", **overrides):
 
     Profiles:
       clip      full chain, TRIMS SILENCE (so it must run before alignment)
+      natural   silence trim + loudness ONLY. No denoise, EQ, de-ess, compress,
+                high-pass. The reader's own tone, with the dead air removed.
+                Length-changing, so it also runs before alignment.
       timeline  full chain minus the trim, length-locked by assert
       raw       loudness normalisation ONLY - see below
 
@@ -298,6 +335,26 @@ def master(x, sr, profile="clip", **overrides):
     cfg.update(overrides)
     if profile == "timeline":
         cfg["trim_silence"] = False
+    elif profile == "natural":
+        # THE READER'S OWN VOICE, WITH THE DEAD AIR TAKEN OUT.
+        #
+        # 'raw' refuses every filter, which also means it keeps every pause - and
+        # long pauses are a pacing problem, not a tone problem. This profile
+        # splits that pair: the silence trim stays, because tightening dead air
+        # is editing rather than processing; everything that changes how the
+        # voice SOUNDS comes out.
+        #
+        # Denoise, EQ, de-esser and compressor are the obvious tone stages. The
+        # high-pass goes too, because an 85 Hz filter is still a filter - if the
+        # take turns out to have rumble, put back `highpass_hz` alone rather
+        # than reaching for 'clip'.
+        #
+        # STILL LENGTH-CHANGING, so this must run BEFORE alignment for the same
+        # reason 'clip' must. And the trimmed length will not exactly match
+        # 'clip': the trim measures energy, and it is now measuring unfiltered
+        # audio, so the boundaries land in slightly different places.
+        cfg.update(denoise=False, deess=False, eq=False, compress=False,
+                   highpass_hz=0.0, trim_silence=True)
     elif profile == "raw":
         x = np.asarray(_to_mono(x), dtype=np.float64)
         n_in = x.shape[0]
@@ -309,7 +366,8 @@ def master(x, sr, profile="clip", **overrides):
         return np.clip(x, -1.0, 1.0)
     elif profile != "clip":
         raise ValueError(
-            f"unknown profile {profile!r} (expected 'clip', 'timeline' or 'raw')")
+            f"unknown profile {profile!r} "
+            f"(expected 'clip', 'natural', 'timeline' or 'raw')")
 
     x = np.asarray(_to_mono(x), dtype=np.float64)
     n_in = x.shape[0]
@@ -317,19 +375,27 @@ def master(x, sr, profile="clip", **overrides):
     # High-pass FIRST: rumble is broadband-adjacent low-frequency energy, and if it
     # is still present when the noise profile is measured it dominates the estimate
     # and the gate ends up subtracting the wrong spectrum from the speech.
-    x = _highpass(x, sr, cfg["highpass_hz"])
+    # EACH STAGE IS GUARDED SO IT CAN BE GENUINELY SKIPPED, not neutralised by
+    # setting its gain to zero. A 0 dB peaking filter is still a filter: it runs,
+    # it costs a pass, and it leaves its own tiny numerical fingerprint. The
+    # 'natural' profile depends on these being untouched, so skipping has to mean
+    # skipping.
+    if cfg.get("highpass_hz"):
+        x = _highpass(x, sr, cfg["highpass_hz"])
     if cfg["denoise"]:
         x = _denoise(x, sr, prop_decrease=cfg["denoise_amount"])
-    x = _peaking(x, sr, cfg["mud_hz"], cfg["mud_db"], cfg["mud_q"])
-    x = _peaking(x, sr, cfg["presence_hz"], cfg["presence_db"], cfg["presence_q"])
-    if cfg["air_hz"] < sr / 2.0 * 0.95:
-        x = _peaking(x, sr, cfg["air_hz"], cfg["air_db"], cfg["air_q"])
+    if cfg.get("eq", True):
+        x = _peaking(x, sr, cfg["mud_hz"], cfg["mud_db"], cfg["mud_q"])
+        x = _peaking(x, sr, cfg["presence_hz"], cfg["presence_db"], cfg["presence_q"])
+        if cfg["air_hz"] < sr / 2.0 * 0.95:
+            x = _peaking(x, sr, cfg["air_hz"], cfg["air_db"], cfg["air_q"])
     if cfg["deess"]:
         x = _deess(x, sr, cfg["deess_threshold_db"], cfg["deess_ratio"])
-    x = _compress(x, sr,
-                  threshold_db=cfg["comp_threshold_db"], ratio=cfg["comp_ratio"],
-                  attack_ms=cfg["comp_attack_ms"], release_ms=cfg["comp_release_ms"],
-                  makeup_db=cfg["comp_makeup_db"])
+    if cfg.get("compress", True):
+        x = _compress(x, sr,
+                      threshold_db=cfg["comp_threshold_db"], ratio=cfg["comp_ratio"],
+                      attack_ms=cfg["comp_attack_ms"], release_ms=cfg["comp_release_ms"],
+                      makeup_db=cfg["comp_makeup_db"])
     if cfg["trim_silence"]:
         x = _trim_silence(x, sr, threshold_db=cfg["trim_threshold_db"])
     x = _loudnorm(x, sr, cfg["target_lufs"], cfg["true_peak_db"])

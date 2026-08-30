@@ -1,0 +1,24 @@
+1. Write the script
+cd f:\wierd_bio\channels
+..\vo_coach\.venv\Scripts\python.exe run_script.py --topic finger_pruning
+
+2. Bind pictures to sentences
+..\vo_coach\.venv\Scripts\python.exe plan_script.py --project wierdbiology/finger_pruning --split dash --motion-clips 15
+
+3. to get the files ->..\vo_coach\.venv\Scripts\python.exe make_nb_prompts.py --project wierdbiology/finger_pruning
+
+3. Populate recordings and images — no command, just files
+<project>/voice_recordings/   section_01.wav, section_02.wav, ...
+<project>/images/             1section1.png, 2section1.png, ...
+<project>/motion/             007.mp4  (slot-numbered Flow clips, optional)
+
+4. Now in google collab in a newcell copy the below code:
+
+
+5. now see the url will get printed (Worker URL: )
+
+6. ..\vo_coach\.venv\Scripts\python.exe build_video.py --project wierdbiology/finger_pruning --stage all --whisper large-v3 --write the copied url --voice natural --motion kenburns
+
+7. now after the file has been downloaded open it in the editor and then listen the whole video and make corrections like slighly drag the visual or change the visual 
+
+

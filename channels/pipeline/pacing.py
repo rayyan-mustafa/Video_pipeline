@@ -43,6 +43,72 @@ ACCENT_HIGH = TARGET_LOW
 # nothing is emphasised. Advisory only.
 ACCENT_SHARE_MAX = 0.25
 
+# ---------------------------------------------------------------------------
+#  MOTION SLOTS - the size of a slot that may carry an external video clip
+# ---------------------------------------------------------------------------
+# These live here rather than in motion.py because they are PACING facts: they
+# describe how long a picture is on screen, which is this module's whole subject.
+# motion.py owns how a frame MOVES; this owns how long a slot LASTS.
+#
+# THE COINCIDENCE THAT WRITES THE RULE. Google Flow's minimum clip is 4.0s and
+# HARD_MAX is 4.0s. A motion clip is therefore exactly the longest hold the spec
+# allows - so motion belongs on the slots that would otherwise sit at the
+# ceiling, which are the ones most at risk of reading as slow.
+MOTION_CLIP_S = 4.0
+
+# Shortest hold still allowed to carry a clip. The residual (up to 0.5s) is
+# absorbed by trimming the clip's TAIL - never by slowing it (the eye reads
+# speed, and these are already a slow drift) and never by freezing it.
+MOTION_SLOT_MIN = 3.5
+
+# Cuts land on real Whisper word timestamps, so "exactly 4.000s" is not
+# reachable. At ~150wpm a word is ~0.4s, which quantises the achievable holds:
+#   9 words = 3.60s accept | 10 = 4.00s ideal | 11 = 4.40s over HARD_MAX, reject
+# Worst-case miss from the target is therefore about half a word gap.
+MOTION_SLOT_WINDOW = (MOTION_SLOT_MIN, MOTION_CLIP_S)
+
+# Editorial dose, as a share of runtime. Motion scales with length; it is not a
+# fixed count. Over-animating costs comprehension for the same reason too many
+# accents do - if everything moves, nothing is emphasised.
+MOTION_SHARE_LOW = 0.10
+MOTION_SHARE_HIGH = 0.15
+
+
+def motion_slots_for(audio_seconds: float,
+                     share: float = (MOTION_SHARE_LOW + MOTION_SHARE_HIGH) / 2.0,
+                     clip_s: float = MOTION_CLIP_S) -> int:
+    """How many external clips a runtime should carry at a given dose.
+
+    A motion clip REPLACES a still slot - it never appends runtime - so this is
+    a count of slots to convert, not of seconds to add.
+    """
+    if clip_s <= 0:
+        raise ValueError("clip_s must be positive")
+    return max(0, int(audio_seconds * share / clip_s))
+
+
+def motion_dose(audio_seconds: float) -> dict:
+    """The 10-15% band expressed as a clip count, for the UI and the planner."""
+    lo = motion_slots_for(audio_seconds, MOTION_SHARE_LOW)
+    hi = motion_slots_for(audio_seconds, MOTION_SHARE_HIGH)
+    return {
+        "runtime": round(audio_seconds, 2),
+        "clip_s": MOTION_CLIP_S,
+        "share_low": MOTION_SHARE_LOW,
+        "share_high": MOTION_SHARE_HIGH,
+        "clips_low": lo,
+        "clips_high": hi,
+        "seconds_low": round(lo * MOTION_CLIP_S, 1),
+        "seconds_high": round(hi * MOTION_CLIP_S, 1),
+        "window": list(MOTION_SLOT_WINDOW),
+    }
+
+
+def fits_motion(hold: float) -> bool:
+    """Is this hold inside the [3.5, 4.0] window a Flow clip may occupy?"""
+    return MOTION_SLOT_MIN <= hold <= MOTION_CLIP_S
+
+
 # The planner's default: the middle of the body band. Accents are placed
 # deliberately in the editor, not produced by the planner's even division.
 DEFAULT_SECONDS_PER_IMAGE = (TARGET_LOW + TARGET_HIGH) / 2.0      # 3.0

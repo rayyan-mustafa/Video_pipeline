@@ -1,0 +1,155 @@
+{
+  "evidence_type": "controlled_experiment",
+  "evidence_type_reason": "The Biology Letters study directly manipulated finger state (wrinkled vs. normal) and measured grip speed on wet and dry objects, though the sources also flag ongoing debate over the evolutionary interpretation of the results.",
+  "named_entities": [
+    {
+      "kind": "researcher",
+      "value": "Mark Changizi",
+      "source": 1
+    },
+    {
+      "kind": "institution",
+      "value": "2AI Labs, Boise, Idaho",
+      "source": 1
+    },
+    {
+      "kind": "researcher",
+      "value": "Tom Smulders",
+      "source": 1
+    },
+    {
+      "kind": "institution",
+      "value": "Newcastle University",
+      "source": 1
+    },
+    {
+      "kind": "journal",
+      "value": "Biology Letters",
+      "source": 1
+    },
+    {
+      "kind": "journal",
+      "value": "Nature",
+      "source": 1
+    },
+    {
+      "kind": "year",
+      "value": "2011",
+      "source": 1
+    },
+    {
+      "kind": "year",
+      "value": "2013",
+      "source": 1
+    },
+    {
+      "kind": "researcher",
+      "value": "Mark Changizi",
+      "source": 2
+    },
+    {
+      "kind": "institution",
+      "value": "Newcastle University",
+      "source": 2
+    },
+    {
+      "kind": "researcher",
+      "value": "T. Ryan Gregory",
+      "source": 2
+    },
+    {
+      "kind": "institution",
+      "value": "University of Guelph",
+      "source": 2
+    },
+    {
+      "kind": "year",
+      "value": "2011",
+      "source": 2
+    },
+    {
+      "kind": "year",
+      "value": "1930s",
+      "source": 2
+    }
+  ],
+  "hard_numbers": [
+    {
+      "value": "1930s",
+      "means": "decade since which scientists have known wrinkling doesn't occur with nerve damage",
+      "source": 1
+    },
+    {
+      "value": "2011",
+      "means": "year Changizi's team proposed the rain-tread/grip hypothesis",
+      "source": 1
+    },
+    {
+      "value": "30 minutes",
+      "means": "soaking time in warm water used to induce finger wrinkling in the experiment",
+      "source": 1
+    },
+    {
+      "value": "30-minute",
+      "means": "soak duration used to wrinkle fingers before the marble-grip test",
+      "source": 2
+    }
+  ],
+  "key_findings": [
+    {
+      "finding": "Wrinkling of wet fingers is not caused by water soaking into the skin, since it fails to occur when finger nerves are damaged.",
+      "source": 1,
+      "certainty": "established"
+    },
+    {
+      "finding": "The wrinkling reaction is controlled by the autonomic nervous system and involves constriction of blood vessels beneath the skin.",
+      "source": 1,
+      "certainty": "established"
+    },
+    {
+      "finding": "In 2011, Changizi's team proposed that wrinkle patterns are optimized to drain water and improve grip, similar to rain treads on tires.",
+      "source": 1,
+      "certainty": "debated"
+    },
+    {
+      "finding": "In a 2013 study, participants picked up wet marbles faster with wrinkled fingers than with dry (unwrinkled) fingers, but wrinkling made no difference for dry objects.",
+      "source": 1,
+      "certainty": "established"
+    },
+    {
+      "finding": "It's unclear why fingers don't stay permanently wrinkled if wrinkling helps with wet grip and doesn't hurt with dry grip; possible costs include reduced fingertip sensitivity or increased risk of damage from catching on objects.",
+      "source": 1,
+      "certainty": "speculative"
+    },
+    {
+      "finding": "It is not yet known which other animals, besides humans and macaques, show this wrinkling response.",
+      "source": 1,
+      "certainty": "speculative"
+    },
+    {
+      "finding": "Some scientists, including T. Ryan Gregory, question whether structural/functional studies of modern human fingers can actually tell us anything about the evolutionary origin of wrinkling, suggesting such explanations may be 'just-so stories.'",
+      "source": 2,
+      "certainty": "debated"
+    }
+  ],
+  "competing_explanations": [
+    {
+      "explanation": "Wrinkled fingers are an evolved adaptation that channels water away like tire treads, improving grip on wet surfaces (Changizi, supported by the Newcastle marble experiment).",
+      "source": 1
+    },
+    {
+      "explanation": "Critics such as T. Ryan Gregory argue that demonstrating a present-day functional benefit does not prove an evolutionary origin, and caution against treating such findings as confirmed adaptive stories.",
+      "source": 2
+    }
+  ],
+  "mechanism": "Finger wrinkling is an active, involuntary process controlled by the autonomic nervous system rather than passive water absorption. It results from constriction of blood vessels beneath the skin, and it fails to occur if the nerves supplying the fingers are damaged. The resulting wrinkle pattern is thought to form channels that help drain water away, similar to rain treads on a tire.",
+  "the_common_myth": "The common belief that fingers wrinkle because water passes into and swells the outer layer of skin.",
+  "the_best_counter_evidence": "Wrinkling doesn't happen at all if the nerves in the finger are severed\u2014even after prolonged soaking\u2014showing it's an active nervous-system-driven response, not passive water absorption; and in the key experiment, wrinkled fingers picked up wet marbles faster than smooth ones, but showed no advantage with dry marbles.",
+  "gaps": [
+    "No specific percentage or time-difference figures are given for how much faster wrinkled fingers picked up wet marbles.",
+    "No sample size is stated for the marble-picking experiment.",
+    "No confirmation of wrinkling's grip advantage in animals other than humans and macaques.",
+    "No resolution of why fingers don't stay permanently wrinkled \u2014 only speculative ideas are offered.",
+    "No definitive evidence settling whether the wrinkling-for-grip explanation reflects true evolutionary origin, as opposed to a functional coincidence; this remains an open, debated question between Changizi and critics like Gregory."
+  ]
+}

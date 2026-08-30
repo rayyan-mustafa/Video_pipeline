@@ -23,7 +23,7 @@ import re
 
 from . import config, paths, script as script_mod
 from .brief import Brief
-from .engine import call_model, parse_json_response
+from .engine import call_model, call_model_json
 from .factcheck import audit_untagged_claims, validate_claims
 
 _BASE_SYSTEM = """You are a retention editor for a YouTube science channel with a
@@ -127,9 +127,8 @@ Respond with ONLY valid JSON, no fences:
 Quote each flagged sentence exactly. If the problem is a missing beat rather than a bad
 line, quote the sentence where the missing beat should have gone and say so in the reason."""
 
-    result = parse_json_response(
-        call_model(config.MODEL_JUDGE, prompt, system=system, max_tokens=3000, temperature=0.2)
-    )
+    result = call_model_json(config.MODEL_JUDGE, prompt, system=system,
+                             max_tokens=3000, temperature=0.2)
     issues = result.get("issues", [])
     for i in issues:
         i["kind"] = "retention"
@@ -158,9 +157,8 @@ Flag at most 6 issues, only real ones.
 
 SCRIPT:
 {body}"""
-    result = parse_json_response(
-        call_model(config.MODEL_JUDGE, prompt, system=system, max_tokens=2500, temperature=0.2)
-    )
+    result = call_model_json(config.MODEL_JUDGE, prompt, system=system,
+                             max_tokens=2500, temperature=0.2)
     issues = result.get("issues", [])
     for i in issues:
         i["kind"] = "arc"
@@ -318,10 +316,8 @@ Respond with ONLY valid JSON, no fences:
 {listing}"""
 
     print("  judging...")
-    verdict = parse_json_response(
-        call_model(config.MODEL_JUDGE, judge_prompt, system=system,
-                   max_tokens=1500, temperature=0.2)
-    )
+    verdict = call_model_json(config.MODEL_JUDGE, judge_prompt, system=system,
+                              max_tokens=1500, temperature=0.2)
 
     win_idx = int(verdict.get("winner", 1)) - 1
     win_idx = max(0, min(win_idx, len(candidates) - 1))

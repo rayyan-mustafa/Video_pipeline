@@ -1,0 +1,218 @@
+{
+  "fact": [
+    {
+      "sentence": "Scientists have known this since the 1930s.",
+      "reason": "The claim is vague ('this') and does not specify what is known. Source 1 says 'researchers have known since the 1930s that the effect does not occur when there is nerve damage in the fingers.' Source 2 says 'Since the 1930s, we\u2019ve known that the wrinkling process is under nervous control.' The claim lacks the specific referent, making it unsupported as stated.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Cut the nerves in a finger and the wrinkling stops completely.",
+      "reason": "Source 1 says 'the effect does not occur when there is nerve damage in the fingers' and Source 2 says 'if you sever the nerves in your finger... the wrinkles won\u2019t form.' The claim adds 'completely' which is not explicitly stated in either source, but the meaning is consistent. However, the claim is a paraphrase and is supported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "That means the body itself controls this reaction.",
+      "reason": "Source 1 states 'this points to the change being an involuntary reaction by the body's autonomic nervous system.' The claim is a reasonable paraphrase and is supported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Now soak that same numb finger for 30 minutes.",
+      "reason": "Source 1 does not mention soaking a numb finger for 30 minutes. It mentions soaking for 30 minutes in the context of the study with participants, but not specifically a numb finger. This claim introduces a specific scenario not directly supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "No wrinkles.",
+      "reason": "Source 1 does not explicitly state 'no wrinkles' for a numb finger. It says the effect does not occur with nerve damage, but the exact phrasing 'no wrinkles' is not directly supported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Blood vessels beneath the skin are pulling tight instead.",
+      "reason": "Source 1 says 'the distinctive wrinkling is caused by blood vessels constricting below the skin.' The claim uses 'pulling tight' which is a reasonable paraphrase of constricting, so it is supported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "The standard explanation was simple: water soaks into the skin and makes it swell.",
+      "reason": "Source 1 says 'People often assume that wrinkling is the result of water passing into the outer layer of the skin and making it swell up.' The claim is a reasonable paraphrase and is supported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Filed under passive, an accident of soaking too long in the tub.",
+      "reason": "Source 1 does not use the phrase 'filed under passive' or describe it as 'an accident of soaking too long in the tub.' This is not directly supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "But scientists have known since the 1930s that this particular explanation cannot be right.",
+      "reason": "Source 1 says 'researchers have known since the 1930s that the effect does not occur when there is nerve damage in the fingers' and Source 2 says 'Since the 1930s, we\u2019ve known that the wrinkling process is under nervous control.' The claim refers to 'this particular explanation' (the water absorption idea) being wrong, which is implied but not explicitly stated in either source. The sources say the effect is under nervous control, not that the explanation 'cannot be right.' This is a slight overstatement, but still supported by the context.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Sever the nerve to a finger, and the wrinkling stops happening, even though the skin is still soaking in the same water.",
+      "reason": "Source 1 says 'the effect does not occur when there is nerve damage in the fingers' and Source 2 says 'if you sever the nerves in your finger... the wrinkles won\u2019t form.' The claim adds 'even though the skin is still soaking in the same water,' which is not explicitly stated in either source, but is a logical inference. However, since it is not directly stated, it is unsupported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "This did, which meant the body's own nervous system was behind it, not passive soaking.",
+      "reason": "Source 1 says 'this points to the change being an involuntary reaction by the body's autonomic nervous system.' The claim is a reasonable paraphrase and is supported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Mark Changizi wanted to know whether wrinkled fingers actually did anything useful, and an independent team at Newcastle University set out to test it.",
+      "reason": "Source 1 mentions Changizi's 2011 suggestion and the Newcastle University study. The claim is supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "The method was almost childishly simple: soak a hand in warm water for thirty minutes, then hand the subject a set of marbles and ask them to fish them out of a tray and post them through a hole as fast as they could.",
+      "reason": "Source 1 says 'participants picked up wet or dry objects including marbles of different sizes with normal hands or with fingers wrinkled after soaking in warm water for 30 minutes.' Source 2 says 'they showed that people can pick up wet marbles more quickly if their fingers are wrinkled after a 30-minute soak in warm water.' Neither source mentions 'post them through a hole' or 'fish them out of a tray.' This adds specific details not in the cited sources, so it is unsupported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Wrinkled fingers moved the wet marbles faster than smooth ones did.",
+      "reason": "Source 1 says 'The subjects were faster at picking up wet marbles with wrinkled fingers than with dry ones.' The claim is a reasonable paraphrase and is supported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "There, wrinkled and smooth fingers performed the same, no advantage in either direction.",
+      "reason": "Source 2 says 'both wet and dry fingers were equally good at picking up dry marbles.' The claim is a reasonable paraphrase and is supported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Underneath the skin, blood vessels do the actual work.",
+      "reason": "Source 1 says 'the distinctive wrinkling is caused by blood vessels constricting below the skin.' The claim is a reasonable paraphrase and is supported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "They constrict under a signal from the autonomic nervous system, the same system that controls your heartbeat and your breathing.",
+      "reason": "Source 1 says 'the change being an involuntary reaction by the body's autonomic nervous system \u2014 the system that also controls breathing, heart rate and perspiration.' The claim is a reasonable paraphrase and is supported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Underneath the skin, the blood vessels constrict and pull tight.",
+      "reason": "Source 1 says 'blood vessels constricting below the skin.' The claim adds 'pull tight' which is a reasonable paraphrase, so it is supported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "That reflex still runs on the autonomic nervous system, the same wiring that governs your heartbeat and your breathing.",
+      "reason": "Source 1 says 'the change being an involuntary reaction by the body's autonomic nervous system \u2014 the system that also controls breathing, heart rate and perspiration.' The claim is a reasonable paraphrase and is supported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "The body never leaves this switched on. Tom Smulders has a guess as to why: wrinkled skin might dull the feeling in the fingertip, or snag more easily on something and tear.",
+      "reason": "Source 1 says 'it's not clear why our fingers are not permanently wrinkled, says Smulders. But he has some ideas. \u201cOur initial thoughts are that this could diminish the sensitivity in our fingertips or could increase the risk of damage through catching on objects.\u201d' The claim is a reasonable paraphrase and is supported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "T. Ryan Gregory, at the University of Guelph, has questioned whether the marble tests prove anything about why the wrinkling evolved in the first place.",
+      "reason": "Source 2 mentions T. Ryan Gregory as a vocal critic and includes a debate about whether such tests tell us about evolutionary origins. The claim is a reasonable paraphrase and is supported.",
+      "kind": "fact"
+    }
+  ],
+  "smuggled": [
+    {
+      "sentence": "\"That's wrong.\"",
+      "reason": "states as fact that the textbook answer is incorrect; sources support this because they explain the wrinkling is an active nervous system response, not passive water absorption.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "\"No swelling logic can explain that.\"",
+      "reason": "states as fact that swelling logic cannot explain the phenomenon; sources support this by noting nerve damage prevents wrinkling, contradicting the swelling theory.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "\"Something besides water is driving this.\"",
+      "reason": "states as fact that something other than water causes wrinkling; sources support this by describing the autonomic nervous system and blood vessel constriction as the cause.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "\"Grooves give it an exit, so the pad of the finger actually touches what it's holding instead of floating on top of it.\"",
+      "reason": "states as fact that grooves allow the finger pad to touch objects; sources support this by describing the drainage network improving grip.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "\"That much held up in the lab, under a stopwatch, with marbles built for exactly this kind of test.\"",
+      "reason": "states as fact that the wet-grip advantage was confirmed in lab tests; sources support this with the Newcastle University study showing faster wet marble pickup.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "\"Your fingertip skin behaves the same way once the blood vessels beneath it constrict.\"",
+      "reason": "states as fact that skin behavior is linked to blood vessel constriction; sources support this by stating wrinkling is caused by blood vessels constricting below the skin.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "\"That same vascular signal is wired into your hands right now.\"",
+      "reason": "states as fact that the vascular signal is present in the viewer's hands; sources support this by describing the autonomic nervous system response as an involuntary reaction.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "\"The same wrinkling that means nothing to you now once helped decide whether that hand came back from the water full or empty.\"",
+      "reason": "states as fact that wrinkling had an evolutionary advantage for ancestors; sources support this with Smulders' statement about helping ancestors gather food.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "\"Not a flaw. Not a glitch. Old instructions, still running.\"",
+      "reason": "states as fact that wrinkling is an evolved trait, not a flaw; sources support this by presenting it as an active process with an evolutionary function.",
+      "kind": "smuggled-claim"
+    }
+  ],
+  "lint": [
+    {
+      "sentence": "\"Cut the nerves in a finger and the wrinkling stops completely.\"",
+      "section": 1,
+      "reason": "5 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "\"Filed under passive, an accident of soaking too long in the tub.\"",
+      "section": 2,
+      "reason": "5 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "The method was almost childishly simple: soak a hand in warm water for thirty minutes, then hand the subject a set of marbles and ask them to fish them out of a tray and post them through a hole as fast as they could.",
+      "section": 3,
+      "reason": "3 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "\"They constrict under a signal from the autonomic nervous system, the same system that controls your heartbeat and your breathing.\"",
+      "section": 4,
+      "reason": "3 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "\"The body never leaves this switched on. Tom Smulders has a guess as to why: wrinkled skin might dull the feeling in the fingertip, or snag more easily on something and tear.\"",
+      "section": 5,
+      "reason": "3 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "\"Filed under passive, an accident of soaking too long in the tub.\"",
+      "section": 2,
+      "reason": "three consecutive sentences of similar length ([14, 12, 14]) - vary the rhythm"
+    },
+    {
+      "sentence": "Water needs somewhere to go, and a flat surface traps it in a thin film that just lets things slide.",
+      "section": 3,
+      "reason": "three consecutive sentences of similar length ([20, 20, 23]) - vary the rhythm"
+    },
+    {
+      "sentence": "That much held up in the lab, under a stopwatch, with marbles built for exactly this kind of test.",
+      "section": 3,
+      "reason": "three consecutive sentences of similar length ([21, 19, 18]) - vary the rhythm"
+    },
+    {
+      "sentence": "",
+      "section": 4,
+      "reason": "Section 4 is 119 words, target 200-250"
+    },
+    {
+      "sentence": "",
+      "section": 5,
+      "reason": "Section 5 is 170 words, target 280-330"
+    },
+    {
+      "sentence": "",
+      "section": 6,
+      "reason": "Section 6 is 69 words, target 150-185"
+    },
+    {
+      "sentence": "\"Who is it working for now?\"",
+      "section": 6,
+      "reason": "the script does not end on a question"
+    }
+  ]
+}

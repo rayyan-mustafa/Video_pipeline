@@ -66,9 +66,15 @@ _SUFFIX_RE = re.compile(r"^.*?[-_ ](\d+)\s*[-_ ]?\s*(?:section|sec)\s*[-_ ]?\s*(
 
 # The pattern LEADING, with anything after it - which is what real generators
 # actually emit: `10section2_202608271333.jpeg` is order 10 of section 2 with a
-# batch timestamp appended.
+# batch timestamp appended. The separator before that timestamp is `.` at least
+# as often as `_` or `-` - Nano Banana's own export is
+# `1section1.png_202608291605.jpeg`, a literal dot before a fake embedded
+# ".png" and the real batch stamp. Path.stem only strips the LAST extension, so
+# that dot survives into the stem and has to be an accepted separator here too,
+# or every image from that exporter fails to parse - measured: 335 of 337 files
+# in a real project, not a one-off.
 _PREFIX_RE = re.compile(
-    r"^(\d+)\s*[-_ ]?\s*(?:section|sec)\s*[-_ ]?\s*(\d+)(?:[-_ ].*)?$", re.I)
+    r"^(\d+)\s*[-_ ]?\s*(?:section|sec)\s*[-_ ]?\s*(\d+)(?:[-_. ].*)?$", re.I)
 
 # A trailing _2 / _3 on an otherwise identical name is a REGENERATION of the same
 # slot, not an extra picture. Treating those as additional scenes would put 53
@@ -98,12 +104,22 @@ def parse_name(stem: str) -> tuple[int, int]:
     return order, section
 
 
-def scan_images(folder: str | Path) -> list[dict]:
+def scan_images(folder: str | Path, strict: bool = True) -> list[dict]:
     """Read a folder of images into [{'path','order','section'}], sorted.
 
-    Everything that is not a recognised image extension is ignored; every file
-    that IS one must parse, because a picture that fails to parse would silently
+    Everything that is not a recognised image extension is ignored. With
+    `strict=True` (the default, and the only mode any BUILD path uses - see
+    build_video.py and plan_script.py's --split match), every file that IS one
+    must parse, because a picture that fails to parse would otherwise silently
     not appear in the video.
+
+    `strict=False` is for a read-only LISTING rather than a build decision (the
+    Studio's Images page and its timeline replace-picker): a folder can
+    legitimately collect reference/concept art from the same generator
+    alongside the real slot pictures, and failing the whole listing over files
+    nothing was ever going to render would make the picker useless rather than
+    safe. Unparseable files are skipped and named in `_notes` instead of
+    raising - still visible, never silently different from what a build sees.
     """
     folder = Path(folder)
     if not folder.is_dir():
@@ -127,13 +143,14 @@ def scan_images(folder: str | Path) -> list[dict]:
         try:
             order, section = parse_name(stem)
         except PlanError as e:
-            bad.append(str(e))
+            bad.append((p.name, str(e)))
             continue
         items.append({"path": str(p), "order": order, "section": section,
                       "variant": variant})
 
-    if bad:
-        raise PlanError("unparseable image filenames:\n  - " + "\n  - ".join(bad))
+    if bad and strict:
+        raise PlanError("unparseable image filenames:\n  - "
+                        + "\n  - ".join(msg for _, msg in bad))
     if not items:
         raise PlanError(f"no images found in {folder}")
 
@@ -161,6 +178,18 @@ def scan_images(folder: str | Path) -> list[dict]:
             f"{len(alternates)} alternate take(s) not used: "
             + ", ".join(alternates[:6]) + ("..." if len(alternates) > 6 else "")
         )
+    if bad and not strict:
+        names = [name for name, _ in bad]
+        out[0].setdefault("_notes", []).append(
+            f"{len(names)} file(s) don't match <order>section<section> and were skipped "
+            f"(not slot pictures - e.g. reference art): "
+            + ", ".join(names[:6]) + ("..." if len(names) > 6 else "")
+        )
+        # Named separately from _notes (a human-readable string) so a caller
+        # building an "available to swap in" list - the timeline's replace
+        # picker - can exclude these without re-parsing prose. They are not
+        # candidate pictures; they never matched the naming convention at all.
+        out[0]["_skipped"] = names
     return out
 
 
@@ -421,8 +450,58 @@ def plan(images: list[dict], timeline: list[dict],
     return out, warnings
 
 
+def _spans_from_words(script_plan: dict, words: list[dict]) -> dict:
+    """(section, order) -> (start, end), cut on real Whisper word timestamps.
+
+    Only used for sections where the planner made MORE pictures than scenes -
+    elsewhere the scene spans are already exact and re-deriving them from words
+    would only add rounding.
+
+    The cut lands at the START of a picture's first word, so that word is spoken
+    under the new picture rather than clipped by the outgoing one. This is the
+    same rule `_exact_word_cuts` follows; the difference is that each picture
+    here has its OWN word count from the plan rather than an equal share.
+    """
+    by_section: dict[int, list[dict]] = {}
+    for img in script_plan.get("images", []):
+        by_section.setdefault(int(img["section"]), []).append(img)
+
+    spans: dict = {}
+    for sec, imgs in by_section.items():
+        scenes_here = {i for img in imgs for i in img["scene_indices"]}
+        if len(imgs) <= len(scenes_here):
+            continue                       # whole-scene ownership; spans are exact
+
+        sec_words = [w for w in words if int(w["section"]) == sec]
+        imgs = sorted(imgs, key=lambda i: int(i["order"]))
+        need = sum(int(i["words"]) for i in imgs)
+        if len(sec_words) < need:
+            # Whisper heard fewer words than the script has - usually a skipped
+            # or merged word. Scene spans remain the safer answer.
+            continue
+
+        cursor = 0
+        for n, img in enumerate(imgs):
+            take = int(img["words"])
+            first = sec_words[cursor]
+            last = sec_words[min(len(sec_words) - 1, cursor + take - 1)]
+            start = float(first["s"])
+            # The end is the NEXT picture's start, so the section tiles with no
+            # gap; only the final picture uses its own last word's end.
+            if n + 1 < len(imgs) and cursor + take < len(sec_words):
+                end = float(sec_words[cursor + take]["s"])
+            else:
+                end = float(last["e"])
+            spans[(sec, int(img["order"]))] = (start, end)
+            cursor += take
+    return spans
+
+
 def plan_from_binding(script_plan: dict, timeline: list[dict],
-                      images_dir: str | Path | None = None
+                      images_dir: str | Path | None = None,
+                      require_images: bool = True,
+                      words: list[dict] | None = None,
+                      overrides: dict | None = None,
                       ) -> tuple[list[dict], list[str]]:
     """Join a script_plan.json against an aligned timeline. No division happens.
 
@@ -431,10 +510,30 @@ def plan_from_binding(script_plan: dict, timeline: list[dict],
     binding was made deliberately from the script, so each image simply inherits
     the span of the scenes it already owns - first scene's start to last scene's
     end. Timing is derived, never guessed.
+
+    `require_images=False` gives the timing WITHOUT the pictures existing, which
+    is what the shot sheet needs: the sheet is the thing you generate the
+    pictures FROM, so demanding them first is circular. A render must always keep
+    the default - a missing file has to stop the build long before ffmpeg, which
+    is what the raise below is for.
+
+    `overrides` is the timeline editor's only output (see Project.overrides),
+    keyed by the OUTPUT slot index - stable as long as the binding's fingerprint
+    matches, which is checked below same as everything else here:
+        {"fingerprint": "...", "cuts": {"7": 42.31}, "assets": {"12": "foo.jpeg"}}
+    `cuts` replaces a slot's computed start with an operator-chosen one BEFORE
+    the tiling/min-hold pass, so a roll edit still cannot produce a gap, overlap
+    or sub-floor flash - it can only move where the automatic tiling starts from.
+    `assets` swaps which file a slot renders, same resolution rules as the plan's
+    own filename lookup. A stale fingerprint (the script or plan changed since
+    the edit was made) means WARN AND IGNORE, never apply blindly - a roll edit
+    computed against an old cut list would land on the wrong sentence entirely.
     """
     import hashlib
 
     warnings: list[str] = []
+    ovr_cuts: dict[int, float] = {}
+    ovr_assets: dict[int, str] = {}
 
     # The join is positional, so a script edited after planning would shift every
     # picture by a sentence and produce a video that is subtly, entirely wrong.
@@ -459,25 +558,90 @@ def plan_from_binding(script_plan: dict, timeline: list[dict],
             f"bindings no longer line up. Re-run plan_script.py."
         )
 
+    if overrides:
+        ovr_fp = overrides.get("fingerprint")
+        if ovr_fp and ovr_fp != want:
+            warnings.append(
+                f"overrides.json was made against a different plan "
+                f"(fingerprint {ovr_fp}, current {want}) - IGNORED. Re-do the "
+                f"timeline edits against the current plan."
+            )
+        else:
+            ovr_cuts = {int(k): float(v) for k, v in (overrides.get("cuts") or {}).items()}
+            ovr_assets = {int(k): str(v) for k, v in (overrides.get("assets") or {}).items()}
+
     root = Path(images_dir or script_plan.get("images_dir") or "images")
+
+    # WHEN SEVERAL PICTURES SHARE ONE SCENE, SCENE SPANS CANNOT TIME THEM.
+    # "Each picture inherits the span of the scenes it owns" is exact only while
+    # a picture owns whole scenes. Once the planner splits a long sentence across
+    # three pictures they all report the same single scene_index, so all three
+    # would inherit the same span and the tiling pass would crush two of them
+    # onto the 0.5s floor - measured: 81 of 181 slots flattened to 0.50s.
+    #
+    # The words are the finer ruler. Each picture records the exact words it
+    # carries, and words.json holds a real Whisper timestamp for every one of
+    # them, so a picture's start is simply where its first word was spoken.
+    word_spans = _spans_from_words(script_plan, words) if words else {}
 
     out: list[dict] = []
     missing: list[str] = []
     for img in script_plan.get("images", []):
         idxs = img["scene_indices"]
-        start = float(timeline[idxs[0]]["start"])
-        end = float(timeline[idxs[-1]]["end"])
+        key = (int(img["section"]), int(img["order"]))
+        if key in word_spans:
+            start, end = word_spans[key]
+        else:
+            start = float(timeline[idxs[0]]["start"])
+            end = float(timeline[idxs[-1]]["end"])
 
-        p = Path(img.get("path") or (root / img["filename"]))
+        # An asset override replaces which FILE this slot renders, not its
+        # timing - the slot still owns the same scenes/words either way. Uses
+        # the plan's own resolution rules below (exists-check, then prefix
+        # match) rather than trusting the override name literally, since the
+        # editor may only know the stem the operator picked from a gallery.
+        override_name = ovr_assets.get(len(out))
+        if override_name:
+            p = root / override_name
+        else:
+            p = Path(img.get("path") or (root / img["filename"]))
         if not p.exists():
-            # Accept any extension the generator happened to write.
-            alts = [q for q in root.glob(Path(img["filename"]).stem + ".*")
-                    if q.suffix.lower() in IMAGE_EXTS]
+            # Accept whatever the generator or an upload actually wrote. The
+            # canonical name is "<order>section<section>.<ext>", but a real
+            # export routinely comes back as
+            # "<order>section<section>_2K_20260827....jpeg" or even
+            # "<order>section<section>_20260827....jpeg" with no second
+            # extension at all - Nano Banana does not always embed one.
+            #
+            # MATCH BY PREFIX, NOT BY "a literal dot right after the stem".
+            # The stem always ends in a digit (the section number), so
+            # requiring the very next character to be a real extension
+            # separator is not needed for correctness: "6section1" can never
+            # be a prefix-collision with "60section1" or "6section10" because
+            # the literal word "section" breaks any run of digits. A dot-only
+            # match once rejected a file named "6section1_2026....jpeg" - no
+            # ".png" segment - purely because the byte after the stem was an
+            # underscore instead of a dot, even though it was unambiguously
+            # the right file.
+            stem = Path(override_name or img["filename"]).stem
+            alts = [q for q in root.iterdir()
+                    if q.is_file() and q.suffix.lower() in IMAGE_EXTS
+                    and q.name.startswith(stem)
+                    # Guard the one real collision this prefix match allows:
+                    # a 10+-section project where "1section1" would otherwise
+                    # also match "1section10". The stem's last character is
+                    # always the section digit, so requiring the NEXT
+                    # character to be non-digit (or nothing at all) rules
+                    # that out without narrowing the match back to "a literal
+                    # dot", which is the bug being fixed here.
+                    and (len(q.name) == len(stem) or not q.name[len(stem)].isdigit())]
             if alts:
                 p = alts[0]
-            else:
-                missing.append(img["filename"])
+            elif require_images:
+                missing.append(override_name or img["filename"])
                 continue
+            # else: keep the planned path. See require_images below - the slot is
+            # still perfectly timeable, it just has no file behind it yet.
 
         out.append({
             "index": len(out),
@@ -513,6 +677,15 @@ def plan_from_binding(script_plan: dict, timeline: list[dict],
         # A picture's end is simply where the next one begins. That makes gaps and
         # overlaps unrepresentable rather than merely unlikely.
         starts = [e["start"] for e in out]
+
+        # A roll edit replaces the computed start with the operator's chosen
+        # one, but ONLY as the input to the tiling pass below - it still goes
+        # through the same monotonic/min-hold clamp as every other cut, so a
+        # dragged edit can move a boundary but can never produce a gap, an
+        # overlap or a sub-floor flash.
+        for i, t in ovr_cuts.items():
+            if 0 <= i < len(starts):
+                starts[i] = float(t)
 
         # Then enforce a minimum hold, clamping so the tail always has room for
         # the pictures still to come. A cut moved by a few tens of milliseconds is
@@ -556,16 +729,42 @@ def plan_from_binding(script_plan: dict, timeline: list[dict],
 
 
 def verify(plan_entries: list[dict], timeline: list[dict],
-           audio_seconds: float | None = None) -> tuple[list[str], list[str]]:
+           audio_seconds: float | None = None,
+           only_section: int | None = None) -> tuple[list[str], list[str]]:
     """Prove the plan tiles the audio. Returns (checks, failures).
+
+    `only_section` scopes every check to one section, for the same reason
+    `--only-section` scopes the picture check: when you are working through the
+    video a section at a time, a problem in section 3 must not block section 1
+    from rendering. The whole plan is still TIMED - timing is global - but only
+    the section being built is asserted on.
 
     Everything asserted here is cheap and would otherwise only surface as a
     picture sitting over the wrong sentence in the finished file.
     """
     checks, fails = [], []
 
+    if only_section is not None:
+        timeline = [s for s in timeline if int(s["section"]) == only_section]
+        plan_entries = [e for e in plan_entries
+                        if int(e["section"]) == only_section]
+        if not timeline or not plan_entries:
+            return [f"section {only_section} is not in the plan"], \
+                   [f"no slots or scenes for section {only_section}"]
+        # The section's own span replaces the whole-video one: it starts where
+        # its first picture starts, not at zero, and the audio it is checked
+        # against is the slice that will actually be muxed.
+        origin = float(plan_entries[0]["start"])
+        audio_seconds = float(plan_entries[-1]["end"]) - origin
+        checks.append(f"section {only_section} only     "
+                      f"{origin:.2f}s-{plan_entries[-1]['end']:.2f}s")
+
     total = float(timeline[-1]["end"])
     covered = sum(e["duration"] for e in plan_entries)
+    if only_section is not None:
+        # Compare like with like: durations cover the section, not the video.
+        total = float(plan_entries[-1]["end"]) - float(plan_entries[0]["start"])
+        audio_seconds = total
     checks.append(f"timeline ends at        {total:.3f}s")
     checks.append(f"image durations sum to  {covered:.3f}s")
     if abs(covered - total) > 0.05:
@@ -580,7 +779,9 @@ def verify(plan_entries: list[dict], timeline: list[dict],
 
     # First picture must open the video; last must close it. A gap at either end
     # shows as a frozen frame or a black hole in the render.
-    if plan_entries:
+    # Only meaningful for a whole-video plan: a single section legitimately
+    # starts partway in and ends partway through the file.
+    if plan_entries and only_section is None:
         if plan_entries[0]["start"] > 0.001:
             fails.append(f"first image starts at {plan_entries[0]['start']:.3f}s, "
                          f"not 0 - the video would open on nothing")
@@ -603,15 +804,42 @@ def verify(plan_entries: list[dict], timeline: list[dict],
 
     # Every picture must sit inside its own section's span, or it is illustrating
     # another section's words.
+    #
+    # THE UPPER BOUND IS THE NEXT SECTION'S FIRST WORD, NOT THIS SECTION'S LAST.
+    # Two recordings joined end to end leave a pause between them, and the tiling
+    # rule above hands that pause to the outgoing section's last picture - which
+    # is the right editorial call: you do not cut to the next section's image
+    # while the previous section's silence is still running. Nothing is spoken in
+    # that gap, so nothing is being mis-illustrated. Bounding by this section's
+    # own last word instead flagged that correct behaviour as a failure, and did
+    # so only on profiles that keep more silence.
+    # BUILT FROM plan_entries, NOT scenes_timeline. A section's pictures are
+    # timed by _spans_from_words when the section has more pictures than
+    # scenes, and that produces a slightly different clock at the boundary
+    # than align()'s own per-scene anchors do - the two agree in spirit but
+    # not to the millisecond. Bounding a picture against the scene-level
+    # timeline while its own end was computed from the word-level one is
+    # comparing two clocks for the same moment: it flagged a picture that
+    # correctly held into the next section's pause as if it had spilled into
+    # real speech, when the pause it held into was real and the "speech" it
+    # supposedly reached was that same pause measured a different way.
     span = {}
-    for s in timeline:
-        sec = int(s["section"])
+    for e in plan_entries:
+        sec = int(e["section"])
         lo, hi = span.get(sec, (float("inf"), 0.0))
-        span[sec] = (min(lo, float(s["start"])), max(hi, float(s["end"])))
+        span[sec] = (min(lo, float(e["start"])), max(hi, float(e["end"])))
+
+    order = sorted(span)
+    upper = {}
+    for i, sec in enumerate(order):
+        nxt = order[i + 1] if i + 1 < len(order) else None
+        upper[sec] = span[nxt][0] if nxt is not None else max(
+            span[sec][1], audio_seconds or span[sec][1])
+
     strays = [e["index"] for e in plan_entries
               if e["section"] in span
               and (e["start"] < span[e["section"]][0] - 0.05
-                   or e["end"] > span[e["section"]][1] + 0.05)]
+                   or e["end"] > upper[e["section"]] + 0.05)]
     checks.append(f"images outside section  {len(strays)}")
     if strays:
         fails.append(f"image(s) {strays[:8]} fall outside their own section's span")

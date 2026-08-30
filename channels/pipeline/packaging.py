@@ -17,7 +17,7 @@ import json
 
 from . import config, paths
 from .brief import Brief
-from .engine import call_model, parse_json_response
+from .engine import call_model_json
 
 
 def _prompt(b: Brief, hook_lines: str, learnings: dict,
@@ -239,10 +239,8 @@ def run(tagged_sentences: list[dict], b: Brief, learnings: dict) -> dict:
     hook_lines = " ".join(i["sentence"] for i in tagged_sentences if i["section"] == 1)
 
     print("Generating packaging...")
-    pack = parse_json_response(
-        call_model(config.MODEL_WRITER, _prompt(b, hook_lines, learnings, tagged_sentences),
-                   max_tokens=4000, temperature=0.8)
-    )
+    pack = call_model_json(config.MODEL_WRITER, _prompt(b, hook_lines, learnings, tagged_sentences),
+                           max_tokens=4000, temperature=0.8)
 
     # Saved BEFORE validation on purpose: if validate() raises, the model call is
     # already paid for and the output is on disk to inspect. Losing it to an

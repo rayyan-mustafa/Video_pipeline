@@ -158,6 +158,133 @@ class KenBurnsProvider:
              f"kenburns slot {slot.index}")
 
 
+class VideoAssetProvider:
+    """Conform an EXTERNAL video clip (Google Flow) onto one slot.
+
+    THIS DOES NOT GENERATE. Flow makes the clip; this ingests it - scale/pad to
+    the build size, conform fps, trim to the slot's hold, and emit something that
+    concatenates byte-identically with the Ken Burns clips. All the hard part
+    already happened somewhere else, which is why this is small.
+
+    IT CHECKS, IT DOES NOT TRUST. A Flow clip is an artefact nothing in this repo
+    produced, so every assumption is verified before encoding. The alternative is
+    discovering a bad clip at slot 140 at the end of a five-minute render, which
+    is the expensive moment to find it - the same reasoning behind `mux()`'s
+    PIL-verify preflight over every image.
+
+    THE RESIDUAL IS TAKEN OFF THE TAIL. A slot's hold lands on a real word
+    boundary, so it is rarely exactly 4.000s - `pacing` accepts [3.5, 4.0], which
+    leaves up to half a second to lose. That comes off the END of the clip, never
+    by slowing it: `motion.py`'s founding rule is that the eye reads speed, and
+    these are already a slow ambient drift - stretching 4.0s over 3.6s of screen
+    time would make it read as static. The tail is also the least informative
+    part of an inbetween, so it is the cheapest half-second to give up.
+
+    NEVER FREEZE, NEVER EXTEND. A clip shorter than its slot is a HARD FAIL, not
+    something to pad: covering the gap would mean holding a frame, and a hold
+    longer than the clip pushes past HARD_MAX by definition.
+    """
+
+    name = "videoasset"
+
+    def __init__(self, clip_for: Callable[[int], Path | None]):
+        # Injected rather than reading motion_slots.json here, so this stays a
+        # pure "given a slot, make a clip" provider and the selection policy
+        # lives entirely in motionplan.py.
+        self.clip_for = clip_for
+
+    def source(self, slot: Slot) -> Path:
+        src = self.clip_for(slot.index)
+        if src is None:
+            raise FileNotFoundError(
+                f"slot {slot.index} is marked as motion but no clip is in the "
+                f"project's motion/ folder yet")
+        return src
+
+    def signature(self, slot: Slot, width: int, height: int, fps: int) -> str:
+        # The SOURCE CLIP's identity has to be in the cache key, not just the
+        # slot's - the slot's own fingerprint hashes the still image, which for a
+        # motion slot is only the Flow seed and does not change when the clip is
+        # re-exported.
+        try:
+            src = self.source(slot)
+            st = src.stat()
+            stamp = f"{src.name}:{st.st_size}:{int(st.st_mtime)}"
+        except (FileNotFoundError, OSError):
+            stamp = "missing"
+        return f"{self.name}|{stamp}|{width}x{height}@{fps}"
+
+    def render(self, slot: Slot, out: Path,
+               width: int, height: int, fps: int) -> None:
+        src = self.source(slot)
+        want = motion.frames_for(slot.hold, fps)
+
+        info = probe_video(src)
+        if info is None:
+            raise RuntimeError(
+                f"slot {slot.index}: ffprobe cannot read {src.name} - it is not "
+                f"a video file this build can use")
+        if info["duration"] + 1e-3 < slot.hold:
+            raise RuntimeError(
+                f"slot {slot.index}: {src.name} is {info['duration']:.2f}s but "
+                f"the slot holds {slot.hold:.2f}s. A clip shorter than its slot "
+                f"cannot be covered without slowing or freezing it, and both are "
+                f"banned - re-export it at least {slot.hold:.2f}s.")
+
+        vf = (f"scale={width}:{height}:force_original_aspect_ratio=decrease:flags=lanczos,"
+              f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:white,"
+              f"fps={fps},format=yuv420p")
+        # -frames:v is what actually trims the tail; -t would land on a
+        # timestamp and could leave the count one frame either side, and
+        # `concat -c copy` has no way to fix drift afterwards.
+        _run(["ffmpeg", "-y", "-i", str(src),
+              "-vf", vf, "-frames:v", str(want), "-an",
+              *_encode_args(fps), str(out)],
+             f"motion slot {slot.index} ({src.name})")
+
+        got = probe_frames(out)
+        if got is not None and got != want:
+            raise RuntimeError(
+                f"slot {slot.index}: conformed {src.name} to {got} frames but "
+                f"the slot needs exactly {want} at {fps}fps. Concat cannot "
+                f"correct drift, so this would desync everything after it.")
+
+
+class MixedProvider:
+    """Per-slot dispatch: motion slots get a real clip, everything else the base.
+
+    THIS IS WHAT A FINISHED VIDEO ACTUALLY USES. The other providers answer
+    "how should EVERY slot be treated"; a real build treats 11 of 217 slots as
+    ingested Flow clips and the other 206 as Ken Burns stills. Expressing that as
+    a provider rather than as a branch inside the mux keeps `render_sequence`,
+    the cache and the concat completely unchanged - they still see one provider
+    with one contract.
+
+    The sub-provider's name goes into the signature, so a slot that switches
+    between still and motion re-renders instead of serving the other one's clip
+    out of the cache.
+    """
+
+    name = "mixed"
+
+    def __init__(self, base: MotionProvider, video: MotionProvider,
+                 motion_indices: set[int]):
+        self.base = base
+        self.video = video
+        self.motion_indices = set(motion_indices)
+
+    def _for(self, slot: Slot) -> MotionProvider:
+        return self.video if slot.index in self.motion_indices else self.base
+
+    def signature(self, slot: Slot, width: int, height: int, fps: int) -> str:
+        p = self._for(slot)
+        return f"{p.name}|{p.signature(slot, width, height, fps)}"
+
+    def render(self, slot: Slot, out: Path,
+               width: int, height: int, fps: int) -> None:
+        self._for(slot).render(slot, out, width, height, fps)
+
+
 PROVIDERS: dict[str, Callable[[], MotionProvider]] = {
     "still": StillProvider,
     "kenburns": KenBurnsProvider,
@@ -219,6 +346,48 @@ def probe_duration(path: Path) -> float:
     if proc.returncode != 0:
         return 0.0
     return float(json.loads(proc.stdout)["format"]["duration"])
+
+
+def probe_video(path: Path) -> dict | None:
+    """Duration, size and fps of an external clip, or None if unreadable.
+
+    Deliberately returns None rather than raising: the caller wants to fail with
+    a message naming the slot and the file, which is far more use than an
+    ffprobe stack trace.
+    """
+    proc = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "v:0",
+         "-show_entries", "stream=width,height,r_frame_rate:format=duration",
+         "-of", "json", str(path)],
+        capture_output=True, text=True)
+    if proc.returncode != 0:
+        return None
+    try:
+        data = json.loads(proc.stdout)
+        stream = (data.get("streams") or [{}])[0]
+        num, _, den = (stream.get("r_frame_rate") or "0/1").partition("/")
+        return {
+            "duration": float(data["format"]["duration"]),
+            "width": int(stream.get("width", 0)),
+            "height": int(stream.get("height", 0)),
+            "fps": (float(num) / float(den)) if float(den or 0) else 0.0,
+        }
+    except (KeyError, ValueError, IndexError, json.JSONDecodeError):
+        return None
+
+
+def probe_frames(path: Path) -> int | None:
+    """Exact frame count of a rendered clip. None if it cannot be counted."""
+    proc = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "v:0", "-count_frames",
+         "-show_entries", "stream=nb_read_frames", "-of", "json", str(path)],
+        capture_output=True, text=True)
+    if proc.returncode != 0:
+        return None
+    try:
+        return int(json.loads(proc.stdout)["streams"][0]["nb_read_frames"])
+    except (KeyError, ValueError, IndexError, json.JSONDecodeError):
+        return None
 
 
 def have_ffmpeg() -> bool:

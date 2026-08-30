@@ -30,7 +30,14 @@ def scan(proj) -> dict:
                 "alternates": [], "by_section": {}}
 
     try:
-        items = imageplan.scan_images(proj.images)
+        # strict=False: this is a read-only listing (the gallery, and the
+        # timeline's replace-picker), not a build decision. A folder that also
+        # holds reference/concept art from the same generator alongside the
+        # real slot pictures must not make the WHOLE listing unusable - see
+        # scan_images' own docstring. The actual build (build_video.py,
+        # plan_script.py --split match) still calls scan_images strict, so a
+        # genuinely mis-named slot picture is still caught loudly there.
+        items = imageplan.scan_images(proj.images, strict=False)
     except imageplan.PlanError as e:
         return {"ok": False, "error": str(e), "images": [],
                 "alternates": [], "by_section": {}}
@@ -38,6 +45,11 @@ def scan(proj) -> dict:
     # scan_images stashes the skipped regenerations on the first entry, so the
     # UI can show "17 alternate takes not used" instead of silently hiding them.
     notes = items[0].pop("_notes", []) if items else []
+    # Files that never matched the naming convention at all (reference/concept
+    # art from the same generator, strict=False's whole reason for existing) -
+    # excluded from `alternates` below, which is offered as "swap this in" by
+    # the timeline's replace picker. They are not candidate pictures.
+    skipped = set(items[0].pop("_skipped", [])) if items else set()
 
     by_section: dict[int, int] = {}
     for it in items:
@@ -60,7 +72,11 @@ def scan(proj) -> dict:
             "variant": i.get("variant", 1),
         } for i in items],
         # Not used by the plan, but still available to swap in from the editor.
-        "alternates": [p.name for p in on_disk if p.name not in used],
+        # Excludes `skipped` - those never matched the naming convention, so
+        # they are junk to this listing, not candidates.
+        "alternates": [p.name for p in on_disk
+                      if p.name not in used and p.name not in skipped],
+        "skipped": sorted(skipped),
         "by_section": {str(k): v for k, v in sorted(by_section.items())},
         "notes": notes,
     }

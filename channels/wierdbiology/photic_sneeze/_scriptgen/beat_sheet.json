@@ -1,0 +1,120 @@
+{
+  "evidence_type": "controlled_experiment",
+  "sections": {
+    "1": {
+      "name": "The Cold Hook",
+      "words": [
+        90,
+        110
+      ],
+      "rhythm": "Rapid, staccato, somatic. Short sharp lines. No sentence over 14 words.",
+      "beats": [
+        "Direct Somatic Directive - one short sentence (3-6 words) telling the viewer to look at, touch, or notice a specific part of their own body right now.",
+        "Rhetorical Diagnostic Question - one sentence asking why this universal, mundane, slightly odd thing happens there.",
+        "The Common-Sense Explanation - one sentence giving the widely-accepted schoolbook answer, stated plainly and confidently, as if it settles the matter.",
+        "The Absolute Negation ('The Snap') - one blunt sentence of 2-4 words stating that answer is wrong. It must be 2-4 words. Not five. Not a clause with a comma.",
+        "The Escalating Mystery - one or two sentences revealing the specific, concrete counter-evidence that breaks the schoolbook answer. Must be drawn from the sources, not asserted."
+      ],
+      "hard_rules": [
+        "Beat 4 must be 2-4 words total.",
+        "No sentence in this section may exceed 14 words.",
+        "Do not name the topic in a textbook way ('Today we are looking at the human chin'). The viewer should not know they are watching an explainer yet."
+      ]
+    },
+    "2": {
+      "name": "Context & Setup",
+      "words": [
+        200,
+        245
+      ],
+      "rhythm": "Moderate. Explanatory swells of 10-16 words alternating with short 5-8 word landings.",
+      "beats": [
+        "The Historical Anchor - one sentence placing the question in time: who first asked it, when it was first noticed, or how long it has gone unanswered. Use a named person or year ONLY if the sources give you one; otherwise anchor it in whatever framing the sources do support.",
+        "The Status Quo - one or two sentences on how science classified this: useless, vestigial, accidental, passive, a side effect.",
+        "The Crack - one or two sentences on the observation or anomaly that made the status quo untenable.",
+        "The Human Stake - one or two sentences naming WHO this is actually happening to: a group the sources identify who live with this, work around it, or are affected by it without it being noticed. A real population, never a hypothetical person and never a bare statistic. If the sources support no such group, skip this beat entirely rather than inventing one.",
+        "The Stakes Question - one open sentence that names what is actually at stake in the answer, and hands off into the evidence section."
+      ],
+      "hard_rules": [
+        "Do not invent a scientist's name, an institution, or a year. If the sources do not contain one, write the beat without one.",
+        "The Human Stake beat names real people the sources support, or it does not appear. An invented sufferer is worse than no stake at all - it will be cut by the fact-checker and it breaks trust on a health topic.",
+        "Do not label the stake ('and this matters because...'). Put the people in the sentence and let the weight land on its own."
+      ]
+    },
+    "3": {
+      "name": "The Experiment",
+      "words": [
+        250,
+        300
+      ],
+      "rhythm": "Alternating: a short sharp finding, then a longer vivid image, then a short consequence. Never three data sentences in a row.",
+      "beats": [
+        "The Setup - one sentence naming who ran the study and what they wanted to find out. Include institution/year ONLY if it is in named_entities.",
+        "The Task - one or two sentences on the specific physical thing subjects were asked to do. Make it visualisable.",
+        "The Result - one sharp sentence with the single strongest number from the allowed list.",
+        "The Translation - one or two sentences making that number mean something in a scale a person can feel.",
+        "The Caveat - one sentence on the limit of the finding, if the sources hedge it."
+      ],
+      "hard_rules": [
+        "Maximum TWO sentences carrying numbers in this entire section.",
+        "Never place two number-carrying sentences next to each other."
+      ]
+    },
+    "4": {
+      "name": "The Re-Hook & Mechanism",
+      "words": [
+        200,
+        250
+      ],
+      "rhythm": "Opens with a hard pivot, then builds. Mechanism explained in physical, tangible terms.",
+      "beats": [
+        "The Re-Hook - one short sentence (4-8 words) that reopens the mystery just as the viewer thinks it is solved. This is the single most important retention beat in the script; it sits at roughly the 4-minute mark where viewers leave.",
+        "The Mechanism Breakdown - two to four sentences on how this physically works at a smaller scale: what tissue, what signal, what process, what timing. Concrete nouns and verbs only.",
+        "The Core Metaphor - one or two sentences translating the mechanism into a familiar non-biological object or system. It must be an object the viewer has physically handled.",
+        "The Micro-Impact - one short sentence on what this means for the viewer's own body, today."
+      ],
+      "hard_rules": [
+        "The metaphor must be concrete and handleable (a zipper, a wet sponge, a door wedge). Not abstract (a symphony, a dance, a conversation).",
+        "Do not restate a statistic already given in Section 3."
+      ]
+    },
+    "5": {
+      "name": "The Dilemma",
+      "words": [
+        280,
+        330
+      ],
+      "rhythm": "Slower, heavier, sweeping. Longer sentences with room to breathe. This is the only section allowed to be reflective.",
+      "beats": [
+        "The Trap Closing - one reflective sentence turning the finding on the viewer's own comfortable modern life.",
+        "The Evolutionary Flashback - two to four vivid sentences putting the viewer in a specific ancestral scene where this mattered. Show one concrete situation, not a montage of humanity.",
+        "The Trade-off - one or two sentences on the physiological cost: why the body does not simply keep this switched on, or what it gave up to have this.",
+        "The Uncomfortable Truth - one or two sentences on the thing about this that does not resolve cleanly."
+      ],
+      "hard_rules": [
+        "This is the section most prone to over-writing. Show, do not label. You may not tell the viewer how to feel about a fact - no 'unsettling', 'haunting', 'strangely beautiful', 'profound', 'remarkable'. Describe the thing precisely enough that the feeling arrives on its own.",
+        "Maximum ONE adjective per noun. No stacked adjectives ('a quiet, ancient, forgotten reflex').",
+        "The ancestral flashback must be one specific scene with one specific body doing one specific thing - not 'our ancestors' as a collective."
+      ]
+    },
+    "6": {
+      "name": "Impactful Outro",
+      "words": [
+        150,
+        185
+      ],
+      "rhythm": "Meditative, slow, intimate. Then one hard stop.",
+      "beats": [
+        "The Somatic Return - one sentence looping back to the exact body part and action from the Cold Hook, using some of the same words so the loop is audible.",
+        "The Re-framing - one or two sentences contrasting the sterile modern setting the viewer is sitting in with the machinery still running inside them.",
+        "The Realization - one or two slow sentences on what this quirk actually is, stated plainly.",
+        "The Closing Question ('The Snap') - one final open-ended question of 3-8 words. It must be genuinely unanswerable and must invite the viewer to answer in the comments implicitly, without ever saying 'comment below'."
+      ],
+      "hard_rules": [
+        "No new factual claims in this section at all. Every sentence must be tagged [0].",
+        "The final line must be a real question the viewer could argue about - not a statement wearing a question mark ('Isn't the body amazing?').",
+        "No call to action, no 'subscribe', no 'thanks for watching'."
+      ]
+    }
+  }
+}

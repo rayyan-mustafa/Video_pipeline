@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from . import config
 from .brief import Brief
-from .engine import call_model, parse_json_response
+from .engine import call_model_json
 
 
 def validate_claims(tagged_sentences: list[dict], b: Brief) -> list[dict]:
@@ -53,8 +53,7 @@ SOURCE EXCERPTS:
 CLAIMS:
 {claims_block}"""
 
-    result = parse_json_response(
-        call_model(config.MODEL_CHECKER, prompt, max_tokens=3000, temperature=0))
+    result = call_model_json(config.MODEL_CHECKER, prompt, max_tokens=3000, temperature=0)
     issues = result.get("issues", [])
     for i in issues:
         i["kind"] = "fact"
@@ -100,8 +99,7 @@ SOURCE EXCERPTS:
 SENTENCES MARKED AS NON-FACTUAL:
 {block}"""
 
-    result = parse_json_response(
-        call_model(config.MODEL_CHECKER, prompt, max_tokens=3000, temperature=0))
+    result = call_model_json(config.MODEL_CHECKER, prompt, max_tokens=3000, temperature=0)
     issues = result.get("issues", [])
     for i in issues:
         i["kind"] = "smuggled-claim"

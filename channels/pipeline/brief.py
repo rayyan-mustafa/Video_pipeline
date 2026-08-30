@@ -27,6 +27,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from . import sources
+
 
 @dataclass
 class Brief:
@@ -39,10 +41,7 @@ class Brief:
     # ---------------------------------------------------------------- blocks
     @property
     def sources_block(self) -> str:
-        return "\n\n".join(
-            f"[Source {i+1}: {s['title']}]\n{s['excerpt']}"
-            for i, s in enumerate(self.source_pack)
-        )
+        return sources.render_block(self.source_pack)
 
     @property
     def numbers_block(self) -> str:

@@ -35,7 +35,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from pipeline import config, scenes as scenes_mod, shots
+from pipeline import config, scenes as scenes_mod, shots, videoprompt
 from pipeline.project import Project
 
 
@@ -218,6 +218,48 @@ def fill_all(entries: list[dict], workers: int = 6, topic: str = "") -> int:
     return failures
 
 
+def ask_video(entry: dict, topic: str = "") -> dict:
+    """The animation half, asked only for slots the plan marked as motion."""
+    raw = scenes_mod.call_model(
+        config.MODEL_SCENES, videoprompt.build_prompt(entry, topic),
+        system=videoprompt.SYSTEM, max_tokens=600, temperature=0.4, retries=2,
+    )
+    d = scenes_mod.parse_json_response(raw)
+    if not isinstance(d, dict):
+        raise ValueError(f"not a dict: {raw[:120]!r}")
+    return d
+
+
+def fill_video(entries: list[dict], workers: int = 6, topic: str = "") -> int:
+    """Fill the animation fields on every motion slot. Same failure policy as
+    the image half: a dropped call leaves blank [SLOTS], it never kills the run.
+
+    Runs AFTER the image pass on purpose - the animation prompt is built from
+    the still's own scene, mechanism and metaphor, so it needs those filled
+    first or it would be describing movement in a frame nobody has described.
+    """
+    motion = [e for e in entries if e.get("kind") == "video"]
+    if not motion:
+        return 0
+    failures = 0
+
+    def one(e):
+        nonlocal failures
+        try:
+            d = ask_video(e, topic)
+            for k, v in videoprompt.BLANK.items():
+                got = str(d.get(k, "") or "").strip()
+                e[k] = got if got else v
+        except Exception as ex:
+            failures += 1
+            print(f"  [warn] video {e['filename']}: {ex}")
+            e.update(videoprompt.BLANK)
+
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        list(ex.map(one, motion))
+    return failures
+
+
 # --------------------------------------------------------------------------
 #  The template  (verbatim from the brief, with the slots filled)
 # --------------------------------------------------------------------------
@@ -291,32 +333,128 @@ def mmss(t: float) -> str:
     return f"{int(t) // 60}:{int(t) % 60:02d}"
 
 
-def render_txt(entries: list[dict]) -> str:
-    out = [
-        "NANO BANANA PROMPTS",
+def render_txt(entries: list[dict], section: int | None = None) -> str:
+    """The shot sheet: every slot in order, with the prompt(s) it needs.
+
+    A MOTION SLOT CARRIES TWO PROMPTS, in order: the still first, then the
+    animation that uses it as its exact first frame. Flow is driven
+    image-to-video, so the picture is not optional for a video slot - it is
+    step one of two. Emitting them adjacent, under one header, is what stops
+    the pair being separated when this is worked through by hand.
+    """
+    rows = [e for e in entries if section is None or e["section"] == section]
+    motion = [e for e in rows if e.get("kind") == "video"]
+    timed = [e for e in rows if e.get("hold") is not None]
+
+    head = [
+        "SHOT SHEET",
         "=" * 78,
-        f"{len(entries)} images. One prompt per image.",
+        f"{len(rows)} slots"
+        + (f" in section {section}" if section is not None else "")
+        + f"  -  {len(rows) - len(motion)} still, {len(motion)} motion",
+    ]
+    if timed:
+        total = sum(e["hold"] for e in timed)
+        head.append(f"{total:.1f}s of screen time, timings measured by Whisper")
+    if motion:
+        head.append(f"{len(motion)} x 4.0s Flow clip = {len(motion) * 4.0:.1f}s of motion")
+    head += [
         "",
         "Attach your character reference sheet and the Visual Bible to EVERY",
-        "generation. Save each result under the filename in its header - the",
-        "build reads timing from that name and nothing else.",
+        "image generation. Save each result under the filename in its header -",
+        "the build reads section and order out of that name and nothing else.",
+        "",
+        "A MOTION slot needs BOTH prompts below it: generate the still first,",
+        "then upload that still to Flow with the animation prompt. Save the clip",
+        "as <slot index>.mp4 in the project's motion/ folder.",
         "",
     ]
-    for e in entries:
-        scenes = ", ".join(str(i) for i in e.get("scene_indices", []))
+
+    out = list(head)
+    for e in rows:
+        is_video = e.get("kind") == "video"
+        when = ""
+        if e.get("hold") is not None:
+            when = f"   |   {mmss(e['start'])}-{mmss(e['end'])}  ({e['hold']:.2f}s)"
+        idx = f"slot {e['index']}   |   " if e.get("index") is not None else ""
         out += [
             "",
             "=" * 78,
-            f" {e['filename']}   |   section {e['section']}   |   "
-            f"scene {scenes}   |   {e['shot']}",
+            f" {'[MOTION] ' if is_video else ''}{e['filename']}   |   {idx}"
+            f"section {e['section']}   |   {e['shot']}{when}",
             "=" * 78,
             f" narration: {' '.join(e['narration'])}",
             "-" * 78,
             "",
-            TEMPLATE.format(**e),
-            "",
         ]
+        if is_video:
+            out += ["--- 1 of 2: the still (this becomes Flow's first frame) ---", ""]
+        out += [TEMPLATE.format(**e), ""]
+        if is_video:
+            out += [
+                "",
+                "--- 2 of 2: the animation (upload the still above) ---",
+                "",
+                videoprompt.TEMPLATE.format(**e),
+                "",
+            ]
     return "\n".join(out)
+
+
+def attach_timings(entries: list[dict], proj) -> int:
+    """Copy measured start/end/hold onto each slot from render_plan.json.
+
+    Timing is DERIVED, never stored in the plan - see plan_script's header - so
+    the sheet reads it back from the render plan when one exists and simply
+    omits the column when it does not. Matching is by (section, order), which is
+    the pair the filename encodes and the only stable identity a slot has.
+    """
+    plan = None
+    if proj.render_plan.exists():
+        try:
+            plan = json.loads(proj.render_plan.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            plan = None
+
+    # DERIVE THE TIMING WHEN THERE IS NO RENDER PLAN - which is the normal case
+    # here, because the render plan needs the pictures to exist and this sheet is
+    # what you generate them FROM. The aligned timeline and words.json are enough:
+    # a slot's span is where its own words were spoken.
+    if plan is None or len(plan) != len(entries):
+        if not (proj.timeline.exists() and proj.plan.exists()):
+            return 0
+        try:
+            from pipeline import imageplan
+            script_plan = json.loads(proj.plan.read_text(encoding="utf-8"))
+            timeline = json.loads(proj.timeline.read_text(encoding="utf-8"))
+            wf = proj.build / "words.json"
+            words = json.loads(wf.read_text(encoding="utf-8")) if wf.exists() else None
+            plan, _ = imageplan.plan_from_binding(
+                script_plan, timeline, require_images=False, words=words)
+        except Exception as e:
+            print(f"  [warn] could not derive timings: {e}")
+            return 0
+    # STALE TIMINGS ARE WORSE THAN NO TIMINGS. render_plan.json carries no
+    # fingerprint of its own, so a plan re-run at a different picture count
+    # leaves a render plan whose (section, order) pairs still partially match -
+    # 105 of them did on chin, silently pinning the new 181-slot sheet to the
+    # old plan's holds. Slot count is the cheap check that catches it.
+    if len(plan) != len(entries):
+        print(f"  [warn] timing source has {len(plan)} slots but the plan has "
+              f"{len(entries)} - stale. No timings attached.")
+        return 0
+
+    by_key = {(int(i["section"]), int(i["order"])): i for i in plan}
+    n = 0
+    for e in entries:
+        item = by_key.get((int(e["section"]), int(e["order"])))
+        if item:
+            e["index"] = item["index"]
+            e["start"] = item["start"]
+            e["end"] = item["end"]
+            e["hold"] = item["duration"]
+            n += 1
+    return n
 
 
 def main() -> None:
@@ -339,12 +477,40 @@ def main() -> None:
                          "an existing nb_prompts.json, and leave every filled one "
                          "byte-for-byte alone. A 66-call run drops one now and "
                          "then; this fixes it without rewriting the rest.")
+    ap.add_argument("--section", type=int, default=None,
+                    help="write the sheet for ONE section only. The plan is still "
+                         "read whole, so motion slots stay where the whole-video "
+                         "budget put them.")
+    ap.add_argument("--export-only", action="store_true",
+                    help="write ONLY the .txt sheet from the nb_prompts.json "
+                         "already on disk - no API calls, and nb_prompts.json is "
+                         "not touched. Use this for a --section sheet once the "
+                         "full run has already filled the prompts: passing "
+                         "--no-llm here instead would overwrite every filled "
+                         "prompt with blanks, because main() always rebuilds "
+                         "nb_prompts.json from the plan.")
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--seed", type=int, default=shots.SHOT_SEED)
     args = ap.parse_args()
 
     proj = Project.parse(args.project)
     args.work = proj.build
+
+    if args.export_only:
+        prev_path = args.work / "nb_prompts.json"
+        if not prev_path.exists():
+            raise SystemExit(f"--export-only needs an existing {prev_path} - "
+                             f"run a full fill first")
+        entries = json.loads(prev_path.read_text(encoding="utf-8"))
+        suffix = f"_section{args.section}" if args.section else ""
+        out_txt = args.out or (args.work / f"shot_sheet{suffix}.txt")
+        out_txt.write_text(render_txt(entries, args.section), encoding="utf-8")
+        shown = [e for e in entries
+                if args.section is None or e["section"] == args.section]
+        print(f"  {len(shown)} slots exported from the existing nb_prompts.json "
+              f"(unchanged) -> {out_txt}")
+        return
+
     plan_path = proj.plan
     if not plan_path.exists():
         raise SystemExit(f"{plan_path} not found - run plan_script.py first")
@@ -353,6 +519,12 @@ def main() -> None:
     topic = args.topic or _plan.get("topic", "")
 
     deterministic_slots(entries, seed=args.seed)
+    # Cameras are assigned across ALL motion slots, not just the ones being
+    # written, so the "never the same move twice running" property holds for the
+    # finished video rather than for whichever section was exported.
+    videoprompt.assign_cameras([e for e in entries if e.get("kind") == "video"],
+                               seed=args.seed)
+    n_timed = attach_timings(entries, proj)
     if args.background_mode == "ask":
         for e in entries:
             e["background"] = BACKGROUND_ASK
@@ -371,6 +543,8 @@ def main() -> None:
             e.update(BLANK)
             if not e["has_character"]:
                 e["character_action"] = NO_CHARACTER
+            if e.get("kind") == "video":
+                e.update(videoprompt.BLANK)
         failures = 0
     elif args.repair:
         prev_path = args.work / "nb_prompts.json"
@@ -385,6 +559,9 @@ def main() -> None:
                 e.update({k: old[k] for k in BLANK if k in old})
             else:
                 blanks.append(e)
+        for e in entries:
+            if e.get("kind") == "video" and "movement" not in e:
+                e.update(videoprompt.BLANK)
         if not blanks:
             print("  nothing to repair - every prompt is filled")
             failures = 0
@@ -394,17 +571,32 @@ def main() -> None:
     else:
         print(f"Filling {len(entries)} prompts via {config.MODEL_SCENES}...")
         failures = fill_all(entries, workers=args.workers, topic=topic)
+        n_motion = sum(1 for e in entries if e.get("kind") == "video")
+        if n_motion:
+            print(f"Filling {n_motion} animation prompt(s)...")
+            failures += fill_video(entries, workers=args.workers, topic=topic)
 
-    out_txt = args.out or (args.work / "nb_prompts.txt")
+    suffix = f"_section{args.section}" if args.section else ""
+    out_txt = args.out or (args.work / f"shot_sheet{suffix}.txt")
     out_txt.parent.mkdir(parents=True, exist_ok=True)
-    out_txt.write_text(render_txt(entries), encoding="utf-8")
+    out_txt.write_text(render_txt(entries, args.section), encoding="utf-8")
     (out_txt.parent / "nb_prompts.json").write_text(
         json.dumps(entries, indent=2), encoding="utf-8")
 
     from collections import Counter
-    print(f"\n  {len(entries)} prompts written")
-    print(f"  shots:       {dict(Counter(e['shot'] for e in entries))}")
-    print(f"  backgrounds: {dict(Counter(e['background'].split(' rgb')[0] for e in entries))}")
+    shown = [e for e in entries
+             if args.section is None or e["section"] == args.section]
+    n_motion = sum(1 for e in shown if e.get("kind") == "video")
+    print(f"\n  {len(shown)} slots written"
+          f"  ({len(shown) - n_motion} still, {n_motion} motion)")
+    if n_timed:
+        print(f"  timings attached for {n_timed} slot(s), measured by Whisper")
+    else:
+        print("  no render_plan.json yet - sheet has no timings")
+    print(f"  shots:       {dict(Counter(e['shot'] for e in shown))}")
+    print(f"  backgrounds: {dict(Counter(e['background'].split(' rgb')[0] for e in shown))}")
+    if n_motion:
+        print(f"  cameras:     {dict(Counter(e['camera'] for e in shown if e.get('kind') == 'video'))}")
     if failures:
         print(f"  {failures} prompt(s) fell back to blank slots - fill them by hand")
     print(f"\n  {out_txt}")

@@ -1,0 +1,328 @@
+[
+  {
+    "sentence": "Walk outside into the sun right now.",
+    "section": 1,
+    "sources": []
+  },
+  {
+    "sentence": "Notice the tickle in your nose.",
+    "section": 1,
+    "sources": []
+  },
+  {
+    "sentence": "Your body is just clearing dust from your nasal passage.",
+    "section": 1,
+    "sources": []
+  },
+  {
+    "sentence": "Wrong.",
+    "section": 1,
+    "sources": []
+  },
+  {
+    "sentence": "There is no dust.",
+    "section": 1,
+    "sources": []
+  },
+  {
+    "sentence": "Nothing touched your nose at all, and one of every four people sneeze anyway.",
+    "section": 1,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "Some drivers coming out of a tunnel sneeze at triple the normal rate.",
+    "section": 1,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "Light did that.",
+    "section": 1,
+    "sources": []
+  },
+  {
+    "sentence": "Nobody knows exactly when someone first noticed this, but the guess keeps landing on antiquity.",
+    "section": 4,
+    "sources": [
+      4
+    ]
+  },
+  {
+    "sentence": "The best guess points to Aristotle, though no one can point to the line where he said it.",
+    "section": 4,
+    "sources": [
+      4
+    ]
+  },
+  {
+    "sentence": "For most of medical history this got filed as a curiosity, a footnote, a strange crossed wire and nothing more.",
+    "section": 1,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "Doctors assumed the optic nerve and the trigeminal nerve just sat too close together in the brainstem and occasionally short-circuited each other.",
+    "section": 1,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "Then researchers strapped electrodes to people's scalps and looked at what actually lit up.",
+    "section": 1,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "It was not the brainstem doing the heavy lifting.",
+    "section": 1,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "It was the visual cortex, and a region called the cuneus, running hotter in photic sneezers than in everyone else.",
+    "section": 1,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "Fighter pilots and combat aviators have been flagged in military medicine research as a group where this reflex is an actual operational risk.",
+    "section": 3,
+    "sources": [
+      3
+    ]
+  },
+  {
+    "sentence": "So has anyone driving straight at a low winter sun.",
+    "section": 1,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "What is actually happening between your eye and your nose when that light hits?",
+    "section": 1,
+    "sources": []
+  },
+  {
+    "sentence": "A team behind a study called \"When the Sun Prickles Your Nose\" ran EEG scans on people with the reflex and people without it.",
+    "section": 1,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "They sat subjects down and exposed them to bright light, then watched the brain's electrical response in real time.",
+    "section": 1,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "The strongest number in the whole body of research is blunt: about 24% of people in a large Swedish blood donor sample sneeze this way.",
+    "section": 1,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "That is roughly one in every four people you have ever stood next to in a queue outside on a sunny day.",
+    "section": 1,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "The sneezers also showed something else \u2014 nasal prickling that felt stronger correlated with activity in the insula and the secondary somatosensory cortex.",
+    "section": 1,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "Those regions handle interoception, the felt sense of your own body from the inside.",
+    "section": 1,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "None of this is confirmed as the mechanism.",
+    "section": 1,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "The researchers themselves call it a challenge to older theories, not a replacement for them.",
+    "section": 1,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "So the wiring story is not finished.",
+    "section": 1,
+    "sources": []
+  },
+  {
+    "sentence": "Here is the part that does not fit the simple version.",
+    "section": 1,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "A 2019 paper proposes that two cranial nerves are doing this together, the fifth and the tenth, the same pairing implicated in something called the trigeminocardiac reflex.",
+    "section": 2,
+    "sources": [
+      2
+    ]
+  },
+  {
+    "sentence": "That reflex has been connected, in other research, to SIDS, to stroke, to sleep disorders.",
+    "section": 2,
+    "sources": [
+      2
+    ]
+  },
+  {
+    "sentence": "Nobody is saying photic sneezing causes any of those.",
+    "section": 2,
+    "sources": [
+      2
+    ]
+  },
+  {
+    "sentence": "But the fact that the same nerve pathway shows up in that company is not nothing.",
+    "section": 2,
+    "sources": [
+      2
+    ]
+  },
+  {
+    "sentence": "Think of your face as a house with old wiring.",
+    "section": 2,
+    "sources": []
+  },
+  {
+    "sentence": "Flip one switch in the hallway and a light in a completely different room flickers.",
+    "section": 2,
+    "sources": []
+  },
+  {
+    "sentence": "That is what a sneeze in bright sun actually is, a switch thrown in one circuit tripping a breaker in another. [S1,S2|1,2]",
+    "section": 2,
+    "sources": []
+  },
+  {
+    "sentence": "You are not filtering out dust today.",
+    "section": 1,
+    "sources": []
+  },
+  {
+    "sentence": "You are watching two separate nerve systems argue with each other in real time. [S1,S2|1,2]",
+    "section": 1,
+    "sources": []
+  },
+  {
+    "sentence": "It is strange to think of your own face doing this on a commute, on a lunch break, walking to a car in a parking lot.",
+    "section": 5,
+    "sources": []
+  },
+  {
+    "sentence": "Picture someone stepping out of a cave mouth at dawn, forty thousand years ago, into a sudden wall of light after a night of darkness and smoke.",
+    "section": 5,
+    "sources": []
+  },
+  {
+    "sentence": "A sneeze that clears the airway fast, right as the body shifts from dim firelight to open glare, is not a useless accident in that moment.",
+    "section": 5,
+    "sources": []
+  },
+  {
+    "sentence": "It could be a leftover of something that once mattered, though no source will actually confirm that for you.",
+    "section": 5,
+    "sources": [
+      1
+    ]
+  },
+  {
+    "sentence": "Nobody has found the gene.",
+    "section": 3,
+    "sources": [
+      3
+    ]
+  },
+  {
+    "sentence": "Collie and his colleagues proposed autosomal dominant inheritance and even gave it a name, ACHOO syndrome, but even the researchers who cite that theory admit it might just be an artifact of who bothers to notice their own sneezing and who does not. [S1,S3|1,3]",
+    "section": 3,
+    "sources": []
+  },
+  {
+    "sentence": "If one of your parents has this reflex, you have a 50% chance of having it too. [S2,S3|2,3]",
+    "section": 3,
+    "sources": []
+  },
+  {
+    "sentence": "That is a coin flip built into your face before you were born. [S2,S3|2,3]",
+    "section": 3,
+    "sources": []
+  },
+  {
+    "sentence": "And there is no cure for it, no pill, no procedure.",
+    "section": 2,
+    "sources": [
+      2
+    ]
+  },
+  {
+    "sentence": "The entire treatment plan, as it stands today, is a hat, sunglasses, a visor.",
+    "section": 2,
+    "sources": [
+      2
+    ]
+  },
+  {
+    "sentence": "Avoidance is the whole medicine.",
+    "section": 2,
+    "sources": []
+  },
+  {
+    "sentence": "Feel your own nose again.",
+    "section": 1,
+    "sources": []
+  },
+  {
+    "sentence": "You are sitting somewhere ordinary right now, a couch, a bus seat, a desk under a fluorescent light.",
+    "section": 1,
+    "sources": []
+  },
+  {
+    "sentence": "None of that stops the same wiring from running underneath, quiet, waiting for the first window with real sun in it.",
+    "section": 1,
+    "sources": []
+  },
+  {
+    "sentence": "This is not dust, and it was never dust.",
+    "section": 1,
+    "sources": []
+  },
+  {
+    "sentence": "It is a piece of you that answers to light the way your pupils do, faster than you can think about it, and nobody fully knows why your brain wired it that way. [S1,S2|1,2]",
+    "section": 1,
+    "sources": []
+  },
+  {
+    "sentence": "What else in your face is talking to something it was never supposed to touch?",
+    "section": 1,
+    "sources": []
+  }
+]

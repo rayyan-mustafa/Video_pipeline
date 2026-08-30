@@ -1,0 +1,308 @@
+{
+  "fact": [
+    {
+      "sentence": "That's wrong.",
+      "reason": "The claim is vague and does not correspond to any specific statement in Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Scientists have known this since the 1930s.",
+      "reason": "Source 1 says 'researchers have known since the 1930s that the effect does not occur when there is nerve damage in the fingers.' Source 2 says 'Since the 1930s, we\u2019ve known that the wrinkling process is under nervous control.' The claim is supported by both sources.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Cut the nerves in a finger and the wrinkling stops completely.",
+      "reason": "Source 1 says 'the effect does not occur when there is nerve damage in the fingers.' Source 2 says 'if you sever the nerves in your finger ... the wrinkles won\u2019t form.' The claim is supported by both sources.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Soak that numb finger for 30 minutes.",
+      "reason": "Source 1 mentions soaking for 30 minutes in the experiment but does not mention a numb finger. The claim is not directly supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Nothing happens.",
+      "reason": "Source 1 does not state that nothing happens with a numb finger. The claim is not supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "The standard explanation was simple: skin is dead tissue, and dead tissue swells when it sits in water.",
+      "reason": "Source 1 says 'People often assume that wrinkling is the result of water passing into the outer layer of the skin and making it swell up.' It does not describe skin as 'dead tissue' or say 'dead tissue swells.' The claim adds specifics not in Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Filed under passive, accidental, not worth a second look.",
+      "reason": "Source 1 does not contain this phrasing or characterization. The claim is not supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "But scientists have known since the 1930s that this particular explanation cannot be right.",
+      "reason": "Source 1 says 'researchers have known since the 1930s that the effect does not occur when there is nerve damage in the fingers.' Source 2 says 'Since the 1930s, we\u2019ve known that the wrinkling process is under nervous control.' The claim is supported by both sources.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Sever the nerve to a finger, and the wrinkling stops happening, even though the skin is still soaking in the same water.",
+      "reason": "Source 1 says 'the effect does not occur when there is nerve damage in the fingers.' Source 2 says 'if you sever the nerves in your finger ... the wrinkles won\u2019t form.' The claim is supported by both sources.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Swelling shouldn't care about nerves.",
+      "reason": "Source 1 does not contain this statement. The claim is not supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "This did, which meant the body was doing something on purpose, not just absorbing water passively.",
+      "reason": "Source 1 says 'this points to the change being an involuntary reaction by the body's autonomic nervous system' but does not say 'on purpose' or 'not just absorbing water passively' in those words. The claim is not directly supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Mark Changizi, an evolutionary neurobiologist, wanted to know whether wrinkled fingers actually did anything useful.",
+      "reason": "Source 1 says 'Mark Changizi ... suggested that wrinkling, being an active process, must have an evolutionary function.' It does not say he 'wanted to know whether wrinkled fingers actually did anything useful.' The claim is not directly supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Working with Tom Smulders at Newcastle University, he set up a simple test: soak someone's hand in warm water for thirty minutes, then hand them a set of marbles and a stopwatch.",
+      "reason": "Source 1 says 'participants picked up wet or dry objects including marbles ... with fingers wrinkled after soaking in warm water for 30 minutes' and mentions Tom Smulders as co-author. Source 2 says 'people can pick up wet marbles more quickly if their fingers are wrinkled after a 30-minute soak.' The claim is supported by both sources.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Some of the marbles were dry, some sat submerged in a tray of water, and the subjects had to fish them out and pass them through a hole as fast as they could, first with smooth fingers, then with fingers pruned from the soak.",
+      "reason": "Source 2 does not mention 'pass them through a hole' or the order 'first with smooth fingers, then with fingers pruned.' The claim adds specifics not in Source 2.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Wrinkled fingers moved the wet marbles faster than smooth ones did.",
+      "reason": "Source 1 says 'The subjects were faster at picking up wet marbles with wrinkled fingers than with dry ones.' The claim is supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "The gain showed up only with the wet marbles.",
+      "reason": "Source 1 says 'wrinkles made no difference for moving dry objects.' The claim is supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Dry marbles moved just as fast in smooth hands as in wrinkled ones, no advantage either way.",
+      "reason": "Source 2 says 'both wet and dry fingers were equally good at picking up dry marbles.' The claim is supported by Source 2.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Underneath the skin, blood vessels do the actual work.",
+      "reason": "Source 1 says 'the distinctive wrinkling is caused by blood vessels constricting below the skin.' The claim is supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "They tighten and narrow under a signal from the autonomic nervous system, the same wiring that handles your heartbeat and your sweat glands.",
+      "reason": "Source 1 says 'the change being an involuntary reaction by the body's autonomic nervous system \u2014 the system that also controls breathing, heart rate and perspiration.' It does not mention 'tighten and narrow' or 'sweat glands' specifically. The claim adds details not in Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Underneath the skin, the blood vessels constrict and pull tight.",
+      "reason": "Source 1 says 'the distinctive wrinkling is caused by blood vessels constricting below the skin.' The claim is supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "The surface has nowhere left to go but into ridges.",
+      "reason": "Source 1 does not contain this statement. The claim is not supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Right now, standing in a shower, that same vascular signal is running through your hands.",
+      "reason": "Source 1 does not mention 'standing in a shower' or 'right now.' The claim is not supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "You are not soaking for thirty minutes, so you will not see it.",
+      "reason": "Source 1 does not contain this statement. The claim is not supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "But the wiring underneath is already listening for the moment you do.",
+      "reason": "Source 1 does not contain this statement. The claim is not supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "That reflex still lives in your autonomic nervous system, the same wiring that governs your heartbeat and your breath, running quietly under decisions you no longer have to make.",
+      "reason": "Source 1 says 'the change being an involuntary reaction by the body's autonomic nervous system \u2014 the system that also controls breathing, heart rate and perspiration.' It does not mention 'reflex still lives' or 'decisions you no longer have to make.' The claim adds specifics not in Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "The body never leaves this switched on, and Tom Smulders has a guess as to why: wrinkled skin might dull the feeling in the fingertip, or snag more easily on a branch or a stone and tear.",
+      "reason": "Source 1 says 'it's not clear why our fingers are not permanently wrinkled, says Smulders. But he has some ideas. \u201cOur initial thoughts are that this could diminish the sensitivity in our fingertips or could increase the risk of damage through catching on objects.\u201d' The claim is supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "That is a guess, not a settled answer, and the gap between the two is where this stays interesting.",
+      "reason": "Source 1 does not contain this statement. The claim is not supported by Source 1.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "There is a second argument running under the first one.",
+      "reason": "Source 2 does not contain this phrase. The claim is not supported by Source 2.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "T. Ryan Gregory, at the University of Guelph, has questioned whether the marble tests prove anything about why the wrinkling evolved in the first place, since a modern hand gripping a modern marble cannot testify to what happened at a riverbank two hundred thousand years ago.",
+      "reason": "Source 2 says 'T. Ryan Gregory ... has been a vocal critic of studies like these' and 'questioned whether the marble tests prove anything about why the wrinkling evolved.' It does not mention 'two hundred thousand years ago' or 'riverbank.' The claim adds specifics not in Source 2.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "It's possible the grip advantage is completely real and still not the reason the trait exists.",
+      "reason": "Source 2 does not contain this statement. The claim is not supported by Source 2.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Two people can hold the same wrinkled finger under the same light, and one will call it an adaptation while the other calls it a story we told afterward and believed.",
+      "reason": "Source 2 does not contain this statement. The claim is not supported by Source 2.",
+      "kind": "fact"
+    }
+  ],
+  "smuggled": [
+    {
+      "sentence": "Water soaks into the outer layer and swells it.",
+      "reason": "states as fact that water absorption causes wrinkling; sources explicitly reject this, noting the effect is under nervous control and not due to water swelling",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "No swelling, no ripples, no prune.",
+      "reason": "states as fact that swelling is necessary for wrinkling; sources contradict this by explaining wrinkling is an active nervous system response, not passive swelling",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "Something besides water is driving this.",
+      "reason": "states as fact that a non-water mechanism drives wrinkling; sources support this, noting nervous control and blood vessel constriction",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "Grooves give it an exit, so the finger underneath actually touches what it's holding.",
+      "reason": "states as fact that wrinkled grooves improve grip by allowing direct contact; sources support this with the rain-tread analogy and experimental evidence",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "So whatever the wrinkling does, it does it strictly for wet grip, and it does nothing when the world is dry.",
+      "reason": "states as fact that wrinkling only aids wet grip and has no effect dry; sources support this, noting the experiment showed no advantage for dry objects",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "Nobody has explained why your fingers don't just stay wrinkled all the time.",
+      "reason": "states as fact that there is no explanation; sources do offer hypotheses (e.g., reduced sensitivity, risk of damage), so this claim is not fully supported",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "Your fingertip skin behaves the same way once the blood vessels beneath it clench.",
+      "reason": "states as fact that skin behavior is caused by blood vessel constriction; sources support this, describing wrinkling as caused by blood vessels constricting",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "The same wrinkling that means nothing to you now once decided whether that hand came back wet and full or wet and empty.",
+      "reason": "states as fact that wrinkling had evolutionary survival value; sources support this with the hypothesis that it helped ancestors gather food",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "A body built for wet stone and slippery roots is riding around inside a body that mostly touches glass screens and dry countertops.",
+      "reason": "states as fact that human bodies are evolutionarily adapted for wet environments; sources support the evolutionary function but this phrasing implies a factual mismatch that is speculative",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "The machinery never got the memo that the rivers are gone.",
+      "reason": "states as fact that the reflex is outdated; sources do not directly claim this, though it is implied by evolutionary reasoning",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "That's the quirk, stated plainly: a survival tool with nothing left to grip.",
+      "reason": "states as fact that the reflex is now useless; sources do not confirm this, as the reflex still functions in wet conditions",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "Your fingers are still bracing for a world that mostly isn't there anymore.",
+      "reason": "states as fact that the reflex is anachronistic; sources do not support this as a factual claim, only as evolutionary speculation",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "So who exactly is this reflex still working for?",
+      "reason": "rhetorical question implying the reflex is obsolete; sources do not support the implication that it has no current function",
+      "kind": "smuggled-claim"
+    }
+  ],
+  "lint": [
+    {
+      "sentence": "T. Ryan Gregory, at the University of Guelph, has questioned whether the marble tests prove anything about why the wrinkling evolved in the first place, since a modern hand gripping a modern marble cannot testify to what happened at a riverbank two hundred thousand years ago.",
+      "section": 5,
+      "reason": "the number 'thousand' does not appear in any fetched source"
+    },
+    {
+      "sentence": "T. Ryan Gregory, at the University of Guelph, has questioned whether the marble tests prove anything about why the wrinkling evolved in the first place, since a modern hand gripping a modern marble cannot testify to what happened at a riverbank two hundred thousand years ago.",
+      "section": 5,
+      "reason": "the number 'hundred' does not appear in any fetched source"
+    },
+    {
+      "sentence": "Filed under passive, accidental, not worth a second look.",
+      "section": 2,
+      "reason": "stacked modifiers ('passive, accidental, not worth') - one adjective per noun"
+    },
+    {
+      "sentence": "Scientists have known this since the 1930s.",
+      "section": 1,
+      "reason": "5 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "Filed under passive, accidental, not worth a second look.",
+      "section": 2,
+      "reason": "6 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "Working with Tom Smulders at Newcastle University, he set up a simple test: soak someone's hand in warm water for thirty minutes, then hand them a set of marbles and a stopwatch.",
+      "section": 3,
+      "reason": "4 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "Dry marbles moved just as fast in smooth hands as in wrinkled ones, no advantage either way.",
+      "section": 3,
+      "reason": "2 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "They tighten and narrow under a signal from the autonomic nervous system, the same wiring that handles your heartbeat and your sweat glands.",
+      "section": 4,
+      "reason": "4 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "You are not soaking for thirty minutes, so you will not see it.",
+      "section": 4,
+      "reason": "3 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "The body never leaves this switched on, and Tom Smulders has a guess as to why: wrinkled skin might dull the feeling in the fingertip, or snag more easily on a branch or a stone and tear.",
+      "section": 5,
+      "reason": "7 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "Right now, standing in a shower, that same vascular signal is running through your hands.",
+      "section": 4,
+      "reason": "three consecutive sentences of similar length ([14, 15, 13]) - vary the rhythm"
+    },
+    {
+      "sentence": "You are not soaking for thirty minutes, so you will not see it.",
+      "section": 4,
+      "reason": "three consecutive sentences of similar length ([15, 13, 12]) - vary the rhythm"
+    },
+    {
+      "sentence": "Not a flaw, not a glitch, just old instructions still running in a new environment.",
+      "section": 6,
+      "reason": "three consecutive sentences of similar length ([13, 15, 13]) - vary the rhythm"
+    },
+    {
+      "sentence": "",
+      "section": 1,
+      "reason": "Section 1 is 76 words, target 90-110"
+    },
+    {
+      "sentence": "",
+      "section": 3,
+      "reason": "Section 3 is 203 words, target 250-300"
+    },
+    {
+      "sentence": "So who exactly is this reflex still working for?",
+      "section": 6,
+      "reason": "closing question is 9 words (target 3-8)"
+    }
+  ]
+}

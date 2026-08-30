@@ -1,0 +1,343 @@
+{
+  "fact": [
+    {
+      "sentence": "Nothing touched your nose at all, and one of every four people sneeze anyway.",
+      "reason": "Source [1] states that exposure to bright light elicits a sneeze or prickling sensation in about one of every four individuals, but does not say 'nothing touched your nose at all' or that they 'sneeze anyway' without any stimulus; the claim misrepresents the context.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Some drivers coming out of a tunnel sneeze at triple the normal rate.",
+      "reason": "Source [1] mentions that photic sneezing could be dangerous for drivers coming out of a tunnel, citing a reference that 'can triple the risk of sneezing', but does not state that drivers actually sneeze at triple the normal rate; it refers to risk, not measured rate.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Nobody knows exactly when someone first noticed this, but the guess keeps landing on antiquity.",
+      "reason": "Source [4] says 'The first mention of this syndrome is most likely in the later work attributed to Aristotle', but does not say 'nobody knows exactly when' or 'the guess keeps landing on antiquity'; the claim adds specifics not in the source.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "The best guess points to Aristotle, though no one can point to the line where he said it.",
+      "reason": "Source [4] states 'The first mention of this syndrome is most likely in the later work attributed to Aristotle', but does not say 'no one can point to the line where he said it'; this is an unsupported detail.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "For most of medical history this got filed as a curiosity, a footnote, a strange crossed wire and nothing more.",
+      "reason": "Source [1] describes the phenomenon as having 'rarely undergone scientific investigation' and being 'clearly in need of study', but does not state it was filed as 'a curiosity, a footnote, a strange crossed wire and nothing more'; the claim adds characterization not in the source.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Doctors assumed the optic nerve and the trigeminal nerve just sat too close together in the brainstem and occasionally short-circuited each other.",
+      "reason": "Source [1] presents the 'optical-trigeminal summation theory' as a possible explanation involving crosstalk between the optic and trigeminal nerves at the level of the mesencephalon, but does not say doctors assumed they 'sat too close together' or 'short-circuited'; the claim oversimplifies and adds unsupported language.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Then researchers strapped electrodes to people's scalps and looked at what actually lit up.",
+      "reason": "Source [1] describes an EEG study where electrodes were used to record brain activity, but does not mention 'strapped electrodes to people's scalps' or 'looked at what actually lit up'; the phrasing is not directly supported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "It was not the brainstem doing the heavy lifting.",
+      "reason": "Source [1] concludes that the photic sneeze reflex 'is not a classical reflex that occurs only at a brainstem or spinal cord level but... involves also specific cortical areas', which supports that the brainstem is not the sole driver, but the phrase 'heavy lifting' is not in the source; however, this is a reasonable paraphrase. No issue.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "It was the visual cortex, and a region called the cuneus, running hotter in photic sneezers than in everyone else.",
+      "reason": "Source [1] states 'a generally enhanced excitability of the visual cortex (mainly in the cuneus) to visual stimuli in photic sneezers compared with control subjects', which supports the claim. No issue.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Fighter pilots and combat aviators have been flagged in military medicine research as a group where this reflex is an actual operational risk.",
+      "reason": "Source [3] references a study on combat pilots (Breitenbach et al. 1993) and mentions airline pilots may be at risk, but does not specifically say 'fighter pilots and combat aviators' or 'actual operational risk'; the claim adds specifics not directly in the source.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "So has anyone driving straight at a low winter sun.",
+      "reason": "Source [1] mentions driving out of a tunnel as a risky situation, but does not mention 'driving straight at a low winter sun'; this is an unsupported detail.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "A team behind a study called \"When the Sun Prickles Your Nose\" ran EEG scans on people with the reflex and people without it.",
+      "reason": "Source [1] is the study titled 'When the Sun Prickles Your Nose: EEG study of photic sneezing' and describes EEG recordings of photic sneezers and controls. The claim is supported. No issue.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "They sat subjects down and exposed them to bright light, then watched the brain's electrical response in real time.",
+      "reason": "Source [1] describes exposure to a standard checkerboard stimulus and bright flashing lights while EEG was recorded, but does not specify 'sat subjects down' or 'watched... in real time'; the claim adds minor unsupported details.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "The strongest number in the whole body of research is blunt: about 24% of people in a large Swedish blood donor sample sneeze this way.",
+      "reason": "Source [1] states 'A Swedish blood donor study... reported photic sneezing in about 24% of the examined subjects', which supports the claim. No issue.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "That is roughly one in every four people you have ever stood next to in a queue outside on a sunny day.",
+      "reason": "Source [1] says about one in four individuals experience the reflex, but does not mention 'queue outside on a sunny day'; this is an unsupported embellishment.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "The sneezers also showed something else \u2014 nasal prickling that felt stronger correlated with activity in the insula and the secondary somatosensory cortex.",
+      "reason": "Source [1] states 'a stronger prickling sensation in the nose of photic sneezers was found to be associated with activation in the insula and stronger activation in the secondary somatosensory cortex', which supports the claim. No issue.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Those regions handle interoception, the felt sense of your own body from the inside.",
+      "reason": "Source [1] does not mention 'interoception' or 'felt sense of your own body from the inside'; this is an unsupported addition.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "None of this is confirmed as the mechanism.",
+      "reason": "Source [1] states 'the neuroanatomy, neurophysiology and aetiology of the phenomenon are still unclear' and that the study's proposal is a hypothesis, not a confirmed mechanism. The claim is supported. No issue.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "The researchers themselves call it a challenge to older theories, not a replacement for them.",
+      "reason": "Source [1] says 'We propose that the photic sneeze phenomenon might be the consequence...' and 'is therefore not a classical reflex... but, in stark contrast to many theories, involves also specific cortical areas', but does not explicitly say it is 'a challenge to older theories, not a replacement'; the claim adds wording not directly in the source.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Here is the part that does not fit the simple version.",
+      "reason": "Source [1] does not contain this phrase or any similar statement; the claim is unsupported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "A 2019 paper proposes that two cranial nerves are doing this together, the fifth and the tenth, the same pairing implicated in something called the trigeminocardiac reflex.",
+      "reason": "Source [2] states 'A 2019 paper argues that the fifth and tenth brainstem nerves play a role in the photic sneeze reflex. This is similar to another reflex, the trigeminocardiac (TCR) reflex.' The claim is supported. No issue.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "That reflex has been connected, in other research, to SIDS, to stroke, to sleep disorders.",
+      "reason": "Source [2] states 'Researchers have linked TCR to sudden infant death syndrome (SIDS), stroke, sleep disorders, and potentially other medical conditions', which supports the claim. No issue.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Nobody is saying photic sneezing causes any of those.",
+      "reason": "Source [2] says 'it is possible that photic sneeze reflex could correlate with a higher risk of these conditions... but more research is necessary', and does not claim causation. The claim is supported. No issue.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "But the fact that the same nerve pathway shows up in that company is not nothing.",
+      "reason": "Source [2] does not contain this phrase or a similar sentiment; the claim is unsupported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "It could be a leftover of something that once mattered, though no source will actually confirm that for you.",
+      "reason": "Source [1] does not mention 'leftover of something that once mattered' or any similar speculation; the claim is unsupported.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Nobody has found the gene.",
+      "reason": "Source [3] states 'The genetic basis of this syndrome is not yet known', which supports that no gene has been found. No issue.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "And there is no cure for it, no pill, no procedure.",
+      "reason": "Source [2] states 'There is no cure for the photic sneeze reflex and no medical treatment', which supports the claim. No issue.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "The entire treatment plan, as it stands today, is a hat, sunglasses, a visor.",
+      "reason": "Source [2] lists 'wearing a sun hat', 'wearing sunglasses', and 'using sun visors in a car' as management strategies, but does not say 'the entire treatment plan' is only those items; the claim overstates by implying exclusivity, though it is a reasonable paraphrase. No issue.",
+      "kind": "fact"
+    }
+  ],
+  "smuggled": [
+    {
+      "sentence": "Your body is just clearing dust from your nasal passage.",
+      "reason": "states as fact that sneezing in bright sun is clearing dust; sources do not support this, as they describe photic sneezing as a reflex triggered by light, not dust.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "There is no dust.",
+      "reason": "states as fact that no dust is present; sources do not support this absolute claim about the nasal passage during photic sneezing.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "Light did that.",
+      "reason": "states as fact that light caused the sneeze; sources support that light triggers photic sneezing, but the sentence implies a direct causal claim that is generally supported.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "That is what a sneeze in bright sun actually is, a switch thrown in one circuit tripping a breaker in another.",
+      "reason": "states as fact a metaphorical explanation of photic sneezing as cross-wiring; sources support the idea of neural crosstalk between optic and trigeminal nerves, so this is supported.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "You are watching two separate nerve systems argue with each other in real time.",
+      "reason": "states as fact that two nerve systems are arguing; sources support co-activation of visual and somatosensory areas, so this is supported.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "Collie and his colleagues proposed autosomal dominant inheritance and even gave it a name, ACHOO syndrome, but even the researchers who cite that theory admit it might just be an artifact of who bothers to notice their own sneezing and who does not.",
+      "reason": "states as fact that researchers admit the inheritance theory might be an artifact; sources mention possible bias in family history reporting (Source 1), so this is supported.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "If one of your parents has this reflex, you have a 50% chance of having it too.",
+      "reason": "states as fact a 50% inheritance chance; sources (Source 2, Source 3) support autosomal dominant inheritance with 50% chance, so this is supported.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "That is a coin flip built into your face before you were born.",
+      "reason": "states as fact a 50% chance metaphor; sources support the 50% inheritance figure, so this is supported.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "It is a piece of you that answers to light the way your pupils do, faster than you can think about it, and nobody fully knows why your brain wired it that way.",
+      "reason": "states as fact that the reflex answers to light like pupils and that the reason is unknown; sources support that the mechanism is not fully understood, so this is supported.",
+      "kind": "smuggled-claim"
+    }
+  ],
+  "lint": [
+    {
+      "sentence": "Picture someone stepping out of a cave mouth at dawn, forty thousand years ago, into a sudden wall of light after a night of darkness and smoke.",
+      "section": 5,
+      "reason": "the number 'thousand' does not appear in any fetched source"
+    },
+    {
+      "sentence": "None of that stops the same wiring from running underneath, quiet, waiting for the first window with real sun in it.",
+      "section": 1,
+      "reason": "stacked modifiers ('underneath, quiet, waiting for') - one adjective per noun"
+    },
+    {
+      "sentence": "Some drivers coming out of a tunnel sneeze at triple the normal rate.",
+      "section": 1,
+      "reason": "2 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "The best guess points to Aristotle, though no one can point to the line where he said it.",
+      "section": 4,
+      "reason": "9 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "They sat subjects down and exposed them to bright light, then watched the brain's electrical response in real time.",
+      "section": 1,
+      "reason": "8 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "A 2019 paper proposes that two cranial nerves are doing this together, the fifth and the tenth, the same pairing implicated in something called the trigeminocardiac reflex.",
+      "section": 2,
+      "reason": "5 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "Nobody has found the gene.",
+      "section": 3,
+      "reason": "2 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "The entire treatment plan, as it stands today, is a hat, sunglasses, a visor.",
+      "section": 2,
+      "reason": "2 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "That is roughly one in every four people you have ever stood next to in a queue outside on a sunny day.",
+      "section": 1,
+      "reason": "three consecutive sentences of similar length ([25, 22, 23]) - vary the rhythm"
+    },
+    {
+      "sentence": "Picture someone stepping out of a cave mouth at dawn, forty thousand years ago, into a sudden wall of light after a night of darkness and smoke.",
+      "section": 5,
+      "reason": "three consecutive sentences of similar length ([26, 27, 26]) - vary the rhythm"
+    },
+    {
+      "sentence": "",
+      "section": 1,
+      "reason": "Section 1 is 459 words, target 90-110"
+    },
+    {
+      "sentence": "",
+      "section": 2,
+      "reason": "Section 2 is 144 words, target 200-245"
+    },
+    {
+      "sentence": "",
+      "section": 3,
+      "reason": "Section 3 is 104 words, target 250-300"
+    },
+    {
+      "sentence": "",
+      "section": 4,
+      "reason": "Section 4 is 33 words, target 200-250"
+    },
+    {
+      "sentence": "",
+      "section": 5,
+      "reason": "Section 5 is 98 words, target 280-330"
+    },
+    {
+      "sentence": "",
+      "section": 6,
+      "reason": "Section 6 (Impactful Outro) is missing entirely"
+    },
+    {
+      "sentence": "For most of medical history this got filed as a curiosity, a footnote, a strange crossed wire and nothing more.",
+      "section": 1,
+      "reason": "Section 1 sentence is 20 words (max 14) - the hook must stay staccato"
+    },
+    {
+      "sentence": "Doctors assumed the optic nerve and the trigeminal nerve just sat too close together in the brainstem and occasionally short-circuited each other.",
+      "section": 1,
+      "reason": "Section 1 sentence is 22 words (max 14) - the hook must stay staccato"
+    },
+    {
+      "sentence": "It was the visual cortex, and a region called the cuneus, running hotter in photic sneezers than in everyone else.",
+      "section": 1,
+      "reason": "Section 1 sentence is 20 words (max 14) - the hook must stay staccato"
+    },
+    {
+      "sentence": "A team behind a study called \"When the Sun Prickles Your Nose\" ran EEG scans on people with the reflex and people without it.",
+      "section": 1,
+      "reason": "Section 1 sentence is 24 words (max 14) - the hook must stay staccato"
+    },
+    {
+      "sentence": "They sat subjects down and exposed them to bright light, then watched the brain's electrical response in real time.",
+      "section": 1,
+      "reason": "Section 1 sentence is 19 words (max 14) - the hook must stay staccato"
+    },
+    {
+      "sentence": "The strongest number in the whole body of research is blunt: about 24% of people in a large Swedish blood donor sample sneeze this way.",
+      "section": 1,
+      "reason": "Section 1 sentence is 25 words (max 14) - the hook must stay staccato"
+    },
+    {
+      "sentence": "That is roughly one in every four people you have ever stood next to in a queue outside on a sunny day.",
+      "section": 1,
+      "reason": "Section 1 sentence is 22 words (max 14) - the hook must stay staccato"
+    },
+    {
+      "sentence": "The sneezers also showed something else \u2014 nasal prickling that felt stronger correlated with activity in the insula and the secondary somatosensory cortex.",
+      "section": 1,
+      "reason": "Section 1 sentence is 23 words (max 14) - the hook must stay staccato"
+    },
+    {
+      "sentence": "The researchers themselves call it a challenge to older theories, not a replacement for them.",
+      "section": 1,
+      "reason": "Section 1 sentence is 15 words (max 14) - the hook must stay staccato"
+    },
+    {
+      "sentence": "You are watching two separate nerve systems argue with each other in real time. [S1,S2|1,2]",
+      "section": 1,
+      "reason": "Section 1 sentence is 15 words (max 14) - the hook must stay staccato"
+    },
+    {
+      "sentence": "You are sitting somewhere ordinary right now, a couch, a bus seat, a desk under a fluorescent light.",
+      "section": 1,
+      "reason": "Section 1 sentence is 18 words (max 14) - the hook must stay staccato"
+    },
+    {
+      "sentence": "None of that stops the same wiring from running underneath, quiet, waiting for the first window with real sun in it.",
+      "section": 1,
+      "reason": "Section 1 sentence is 21 words (max 14) - the hook must stay staccato"
+    },
+    {
+      "sentence": "It is a piece of you that answers to light the way your pupils do, faster than you can think about it, and nobody fully knows why your brain wired it that way. [S1,S2|1,2]",
+      "section": 1,
+      "reason": "Section 1 sentence is 34 words (max 14) - the hook must stay staccato"
+    },
+    {
+      "sentence": "What else in your face is talking to something it was never supposed to touch?",
+      "section": 1,
+      "reason": "Section 1 sentence is 15 words (max 14) - the hook must stay staccato"
+    }
+  ]
+}

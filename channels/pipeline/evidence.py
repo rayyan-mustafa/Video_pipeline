@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import json
 
-from . import config, paths
-from .engine import call_model, parse_json_response
+from . import config, paths, sources
+from .engine import call_model_json
 
 
 def _prompt(topic: str, sources_block: str) -> str:
@@ -68,16 +68,11 @@ SOURCE EXCERPTS:
 
 def run(topic: str, source_pack: list[dict]) -> tuple[dict, dict, str]:
     """-> (profile, beat_sheet, evidence_type). Writes evidence_profile.json."""
-    sources_block = "\n\n".join(
-        f"[Source {i+1}: {s['title']}]\n{s['excerpt']}"
-        for i, s in enumerate(source_pack)
-    )
+    sources_block = sources.render_block(source_pack)
 
     print("Profiling what evidence the sources actually contain...")
-    profile = parse_json_response(
-        call_model(config.MODEL_EXTRACTOR, _prompt(topic, sources_block),
-                   max_tokens=4000, temperature=0)
-    )
+    profile = call_model_json(config.MODEL_EXTRACTOR, _prompt(topic, sources_block),
+                              max_tokens=4000, temperature=0)
 
     with open(paths.p("evidence_profile.json"), "w", encoding="utf-8") as f:
         json.dump(profile, f, indent=2)

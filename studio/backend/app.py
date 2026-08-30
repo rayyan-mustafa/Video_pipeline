@@ -23,7 +23,8 @@ from fastapi import Body, FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 
-from . import assets, jobs, paths, planning, projects, scripts
+from . import (assets, jobs, motionstage, paths, planning, projects, rendering,
+               scripts, settings, timeline, voicestage)
 
 app = FastAPI(title="Video Studio", version="0.1.0")
 
@@ -57,6 +58,34 @@ def health() -> dict:
 @app.get("/api/projects")
 def api_projects() -> list[dict]:
     return projects.list_projects()
+
+
+# ---------------------------------------------------------------------------
+#  Settings  (machine-level, not per project)
+# ---------------------------------------------------------------------------
+# The Colab worker URL lives here because it describes THIS MACHINE'S current
+# link to a GPU, not anything about a video. A cloudflared quick tunnel gets a
+# new hostname every session, so this gets retyped once per Colab run.
+@app.get("/api/settings")
+def api_settings() -> dict:
+    return {**settings.load(), "colab_status": settings.check_colab()}
+
+
+@app.put("/api/settings")
+def api_save_settings(body: dict = Body(...)) -> dict:
+    saved = settings.save(**body)
+    return {**saved, "colab_status": settings.check_colab()}
+
+
+@app.post("/api/settings/colab/check")
+def api_check_colab(body: dict = Body(default={})) -> dict:
+    return settings.check_colab(body.get("url"))
+
+
+@app.get("/api/topics")
+def api_topics() -> list[dict]:
+    """The 15-topic bank, each flagged with whether a project exists for it."""
+    return projects.topics()
 
 
 @app.post("/api/projects")
@@ -148,6 +177,27 @@ async def api_save_script(channel: str, topic: str, body: dict = Body(...)) -> d
     return scripts.write(_proj(channel, topic), text)
 
 
+@app.post("/api/projects/{channel}/{topic}/script/generate")
+async def api_generate_script(channel: str, topic: str) -> dict:
+    proj = _proj(channel, topic)
+    pid = f"{channel}/{topic}"
+    if jobs.registry.running(pid, "script"):
+        raise HTTPException(409, "a script generation is already running for this project")
+    try:
+        job = await scripts.generate(proj)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    return job.as_dict()
+
+
+@app.post("/api/projects/{channel}/{topic}/script/generate/import")
+def api_import_script(channel: str, topic: str) -> dict:
+    try:
+        return scripts.import_generated(_proj(channel, topic))
+    except FileNotFoundError as e:
+        raise HTTPException(409, str(e)) from e
+
+
 # ---------------------------------------------------------------------------
 #  Plan
 # ---------------------------------------------------------------------------
@@ -171,7 +221,18 @@ async def api_run_plan(channel: str, topic: str, body: dict = Body(default={})) 
         seconds_per_image=body.get("seconds_per_image"),
         topic=body.get("topic"),
         allow_brackets=bool(body.get("allow_brackets")),
+        motion_clips=body.get("motion_clips") or __import__("random").randint(12, 16),
     )
+    return job.as_dict()
+
+
+@app.post("/api/projects/{channel}/{topic}/prompts")
+async def api_run_prompts(channel: str, topic: str) -> dict:
+    proj = _proj(channel, topic)
+    pid = f"{channel}/{topic}"
+    if jobs.registry.running(pid, "prompts"):
+        raise HTTPException(409, "prompts generation is already running for this project")
+    job = await planning.run_prompts(proj)
     return job.as_dict()
 
 
@@ -192,6 +253,157 @@ def api_image_pacing(channel: str, topic: str, wpm: int = 150) -> dict:
 async def api_upload_images(channel: str, topic: str,
                             files: list[UploadFile] = File(...)) -> dict:
     return await assets.upload(_proj(channel, topic), files)
+
+
+# ---------------------------------------------------------------------------
+#  Voice
+# ---------------------------------------------------------------------------
+# Naming is resolved as its own step, before any alignment runs. See
+# voicestage.py: the proposal is shown with its evidence and the operator
+# confirms, because a wrong mapping wastes a large-v3 pass.
+@app.get("/api/projects/{channel}/{topic}/voice")
+def api_voice(channel: str, topic: str) -> dict:
+    return voicestage.status(_proj(channel, topic))
+
+
+@app.post("/api/projects/{channel}/{topic}/voice/recordings")
+async def api_upload_recordings(channel: str, topic: str,
+                                files: list[UploadFile] = File(...)) -> dict:
+    return await voicestage.upload(_proj(channel, topic), files)
+
+
+@app.get("/api/projects/{channel}/{topic}/voice/naming")
+def api_naming(channel: str, topic: str) -> dict:
+    return voicestage.propose(_proj(channel, topic))
+
+
+@app.post("/api/projects/{channel}/{topic}/voice/naming")
+def api_apply_naming(channel: str, topic: str,
+                     body: dict = Body(default={})) -> dict:
+    try:
+        return voicestage.apply(_proj(channel, topic),
+                                force=bool(body.get("force")))
+    except (ValueError, FileExistsError) as e:
+        raise HTTPException(409, str(e)) from e
+
+
+@app.delete("/api/projects/{channel}/{topic}/voice/naming")
+def api_revert_naming(channel: str, topic: str) -> dict:
+    try:
+        return voicestage.revert(_proj(channel, topic))
+    except (FileNotFoundError, ValueError) as e:
+        raise HTTPException(409, str(e)) from e
+
+
+@app.post("/api/projects/{channel}/{topic}/voice/run")
+async def api_run_voice(channel: str, topic: str,
+                        body: dict = Body(default={})) -> dict:
+    proj = _proj(channel, topic)
+    pid = f"{channel}/{topic}"
+    if jobs.registry.running(pid, "voice"):
+        raise HTTPException(409, "an alignment is already running for this project")
+
+    state = voicestage.status(proj)
+    if not state["ready"]:
+        raise HTTPException(
+            409,
+            f"recordings are not resolved yet - section(s) "
+            f"{state['missing_sections']} have no audio. Apply the naming "
+            f"proposal first.")
+    try:
+        job = await voicestage.run(
+            proj,
+            whisper=body.get("whisper", voicestage.DEFAULT_MODEL),
+            raw_voice=bool(body.get("raw_voice")),
+            split=body.get("split"),
+            voice_profile=body.get("voice_profile", "natural"),
+            use_colab=bool(body.get("use_colab")),
+        )
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    return job.as_dict()
+
+
+# ---------------------------------------------------------------------------
+#  Motion
+# ---------------------------------------------------------------------------
+# Selection needs MEASURED holds, so every route here is blocked until the voice
+# and plan stages have run. See motionstage.status().
+@app.get("/api/projects/{channel}/{topic}/motion")
+def api_motion(channel: str, topic: str) -> dict:
+    return motionstage.status(_proj(channel, topic))
+
+
+@app.get("/api/projects/{channel}/{topic}/motion/propose")
+def api_motion_propose(channel: str, topic: str) -> dict:
+    try:
+        return motionstage.propose(_proj(channel, topic))
+    except ValueError as e:
+        raise HTTPException(409, str(e)) from e
+
+
+@app.post("/api/projects/{channel}/{topic}/motion")
+def api_save_motion(channel: str, topic: str, body: dict = Body(default={})) -> dict:
+    try:
+        return motionstage.save(_proj(channel, topic), body.get("slots"))
+    except ValueError as e:
+        raise HTTPException(409, str(e)) from e
+
+
+@app.post("/api/projects/{channel}/{topic}/motion/clips")
+async def api_upload_clips(channel: str, topic: str,
+                           files: list[UploadFile] = File(...)) -> dict:
+    return await motionstage.upload(_proj(channel, topic), files)
+
+
+# ---------------------------------------------------------------------------
+#  Timeline  (Phase 5: roll edits, replace, reorder, motion toggle)
+# ---------------------------------------------------------------------------
+# Every route here recomputes render_plan.json through the SAME
+# imageplan.plan_from_binding + motionplan.attach_kinds the CLI's --stage plan
+# uses (see timeline.py's module docstring) - the browser can never see a
+# timeline the real build would compute differently.
+@app.get("/api/projects/{channel}/{topic}/timeline")
+def api_timeline(channel: str, topic: str) -> dict:
+    return timeline.read(_proj(channel, topic))
+
+
+@app.post("/api/projects/{channel}/{topic}/timeline")
+def api_save_timeline(channel: str, topic: str, body: dict = Body(default={})) -> dict:
+    try:
+        return timeline.save(_proj(channel, topic), body)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@app.delete("/api/projects/{channel}/{topic}/timeline")
+def api_revert_timeline(channel: str, topic: str) -> dict:
+    return timeline.revert(_proj(channel, topic))
+
+
+# ---------------------------------------------------------------------------
+#  Render  (the local half of Phase 6 - build a video and preview it here)
+# ---------------------------------------------------------------------------
+@app.get("/api/projects/{channel}/{topic}/render")
+def api_render_status(channel: str, topic: str) -> dict:
+    return rendering.status(_proj(channel, topic))
+
+
+@app.post("/api/projects/{channel}/{topic}/render")
+async def api_run_render(channel: str, topic: str, body: dict = Body(default={})) -> dict:
+    proj = _proj(channel, topic)
+    pid = f"{channel}/{topic}"
+    if jobs.registry.running(pid, "mux"):
+        raise HTTPException(409, "a render is already running for this project")
+    try:
+        job = await rendering.run(
+            proj,
+            motion=body.get("motion", "kenburns"),
+            only_section=body.get("only_section"),
+        )
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    return job.as_dict()
 
 
 # ---------------------------------------------------------------------------

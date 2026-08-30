@@ -19,6 +19,7 @@ working folder has everything the notebook needs to start at Step 16:
  THE GATES, AND WHY THEY RUN IN THIS ORDER
 =============================================================================
   grounding  ->  hook tournament  ->  retention  ->  humanizer  ->  re-grounding
+  ->  policy
 
 Grounding first, because retention is a judgment about delivery and a model
 asked to satisfy both at once will trade accuracy for punchiness.
@@ -28,11 +29,16 @@ the machine-writing tells. "Make this land harder" is the exact instruction that
 produces the em-dash reveal, the rule of three and the parallel-Maybe ending, so
 a humanizer running before it would be undone. See pipeline/humanize.py.
 
-Re-grounding last, and non-negotiably: the retention and humanizer fixers just
-rewrote sentences for punch and for texture, and both are exactly the pressure
-that produces a confident invented specific. Without this pass those gates
-quietly reopen the hole the grounding gate closed -- and they do it on the lines
-you care most about, because those are the ones they touched.
+Re-grounding last of that group, and non-negotiably: the retention and humanizer
+fixers just rewrote sentences for punch and for texture, and both are exactly the
+pressure that produces a confident invented specific. Without this pass those
+gates quietly reopen the hole the grounding gate closed -- and they do it on the
+lines you care most about, because those are the ones they touched.
+
+Policy last of all: it asks a different question from every gate before it (is
+this safe to publish, not is it true/well-written), and a policy-driven rewrite
+should not itself go unchecked -- the banned-phrase backstop still runs after it.
+See pipeline/policy.py.
 """
 
 from __future__ import annotations
@@ -46,10 +52,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from pipeline import config, engine, evidence, factcheck, humanize, lint, packaging  # noqa: E402
-from pipeline import paths, readsheet, retention, script as script_mod, sources      # noqa: E402
+from pipeline import paths, policy, readsheet, retention, script as script_mod       # noqa: E402
+from pipeline import sources                                                         # noqa: E402
 from pipeline.brief import Brief                                                     # noqa: E402
 
 MAX_GROUNDING_ROUNDS = 3
+MAX_POLICY_ROUNDS = 1      # a fixed checklist, not a taste target - one fix-and-recheck
+                           # pass is enough, and keeps this gate's cost near zero
 MAX_RETENTION_ROUNDS = 2   # deliberately lower than the grounding cap. Retention is a
                            # subjective target, and a model chasing "pass" for three rounds
                            # will over-punch one section until it no longer matches the
@@ -375,6 +384,20 @@ def main() -> int:
      lint_issues, fact_issues, smuggled_issues) = retention_gate(
         tagged, b, system, humanizer=not args.no_humanizer)
 
+    # --- Step 14c: platform/content-policy gate -----------------------------
+    print("\n" + "=" * 70)
+    policy_issues = policy.run(tagged, b)
+    dump("policy_round_1.json", policy_issues)
+    for r in range(1, MAX_POLICY_ROUNDS + 1):
+        if not policy_issues:
+            break
+        print(f"\n  policy fix round {r}/{MAX_POLICY_ROUNDS}: rewriting {len(policy_issues)} line(s)")
+        tagged = script_mod.apply_fixes(tagged, policy_issues, policy.POLICY_INSTRUCTION,
+                                        b, temperature=0.3)
+        print("\n  re-screening...")
+        policy_issues = policy.run(tagged, b)
+        dump(f"policy_round_{r + 1}.json", policy_issues)
+
     # --- the one thing that is never allowed to ship -----------------------
     # "unsettling" and "strangely beautiful" are both in BANNED_PHRASES and both
     # reached a finished chin script anyway: every gate above reports its
@@ -416,16 +439,17 @@ def main() -> int:
           f"{len(lint_issues)} lint")
     print(f"  retention : {len(retention_issues)} open")
     print(f"  voiceprint: {len(humanize_issues)} open")
+    print(f"  policy    : {len(policy_issues)} open")
     script_mod.section_table(tagged, b.beat_sheet)
 
     total_open = (len(fact_issues) + len(smuggled_issues) + len(lint_issues)
-                  + len(retention_issues) + len(humanize_issues))
+                  + len(retention_issues) + len(humanize_issues) + len(policy_issues))
     if total_open == 0:
-        print("\n  ALL THREE GATES CLEAN - safe to voice.")
+        print("\n  ALL GATES CLEAN - safe to voice.")
     else:
         print(f"\n  {total_open} issue(s) still open. vo_raw.txt is written either way, but read")
-        print("  validation_round_*.json, retention_round_*.json and humanize_round_*.json")
-        print("  before you record.")
+        print("  validation_round_*.json, retention_round_*.json, humanize_round_*.json and")
+        print("  policy_round_*.json before you record.")
 
     print("\n" + "-" * 70)
     print(master_script)

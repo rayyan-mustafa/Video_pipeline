@@ -75,9 +75,13 @@ MODEL_EXTRACTOR = "anthropic/claude-sonnet-5"    # the evidence profile
 
 # Mechanical matching: does this sentence follow from the source it cites, and
 # is this [0]-tagged line smuggling a claim? Yes/no against text that is right
-# there in the prompt. Deliberately NOT downgraded further - this is the gate
-# that stops a false claim reaching a viewer, and the savings would be ~$0.05.
-MODEL_CHECKER   = "anthropic/claude-haiku-4.5"   # fact-check + smuggled-claim audit
+# there in the prompt. Previously pinned to Haiku on the theory that this is
+# the gate that stops a false claim reaching a viewer and ~$0.05/video was not
+# worth risking it - operator call 2026-08-29 to run it on DeepSeek V4 Flash
+# instead, same as MODEL_SCENES. Watch validation_round_*.json for a quality
+# regression (more unresolved fact/smuggled issues surviving to the final
+# script) before trusting this on a script you are about to publish.
+MODEL_CHECKER   = "deepseek/deepseek-v4-flash"   # fact-check + smuggled-claim audit
 
 # ~160 calls per video, by far the highest volume, and the most constrained
 # task in the pipeline: one sentence -> 5-12 drawable words + an optional
@@ -191,7 +195,7 @@ MODEL_PRESETS = {
         "writer":    "anthropic/claude-sonnet-5",
         "judge":     "anthropic/claude-sonnet-5",
         "extractor": "anthropic/claude-sonnet-5",
-        "checker":   "anthropic/claude-haiku-4.5",
+        "checker":   "deepseek/deepseek-v4-flash",
         "scenes":    "deepseek/deepseek-v4-flash",
     },
     # Everything on one small model, ~$0.01 a run. Proves the WIRING only.

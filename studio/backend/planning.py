@@ -20,7 +20,8 @@ from pipeline import pacing                       # noqa: E402
 async def run(proj, split: str = "match",
               seconds_per_image: float | None = None,
               topic: str | None = None,
-              allow_brackets: bool = False):
+              allow_brackets: bool = False,
+              motion_clips: int | None = None):
     """Start plan_script.py as a job. Returns the Job.
 
     `match` reads the images already on disk and divides the script into exactly
@@ -40,9 +41,23 @@ async def run(proj, split: str = "match",
         argv += ["--topic", topic]
     if allow_brackets:
         argv += ["--allow-brackets"]
+    if motion_clips is not None:
+        argv += ["--motion-clips", str(motion_clips)]
 
     return await jobs.registry.start(
         kind="plan", project=f"{proj.channel}/{proj.topic}",
+        argv=argv, cwd=paths.CHANNELS,
+    )
+
+
+async def run_prompts(proj):
+    """Start make_nb_prompts.py as a job to generate the beat sheet."""
+    argv = [
+        paths.PYTHON, paths.CHANNELS / "make_nb_prompts.py",
+        "--project", f"{proj.channel}/{proj.topic}"
+    ]
+    return await jobs.registry.start(
+        kind="prompts", project=f"{proj.channel}/{proj.topic}",
         argv=argv, cwd=paths.CHANNELS,
     )
 

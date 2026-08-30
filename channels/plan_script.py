@@ -40,7 +40,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from pipeline.project import Project
-from pipeline import imageplan, pacing
+from pipeline import imageplan, pacing, timeplan
 from pipeline.scenesplit import counts as split_counts, make_scenes, match_scenes
 
 # 150 wpm is the read sheets' own assumption (see sections/README.txt), so image
@@ -77,8 +77,31 @@ def to_tagged(sections: list[str]) -> list[dict]:
     return tagged
 
 
-def group_into_images(chunks: list[dict], words_per_image: int) -> list[dict]:
-    """Consecutive scenes -> image slots, one run of scenes per picture.
+def allocate_motion(section_words: dict[int, int], clips: int) -> dict[int, int]:
+    """Spread a motion-clip budget across sections, proportional to their words.
+
+    Largest-remainder, so the total is exactly `clips` rather than drifting by a
+    rounding error per section. A section can never receive more clips than it
+    has room to space out - two adjacent motion slots read as one long shot, so
+    they are capped at roughly every third slot.
+    """
+    total = sum(section_words.values())
+    if total <= 0 or clips <= 0:
+        return {s: 0 for s in section_words}
+
+    exact = {s: clips * w / total for s, w in section_words.items()}
+    out = {s: int(v) for s, v in exact.items()}
+    for s in sorted(exact, key=lambda s: (-(exact[s] - out[s]), s)):
+        if sum(out.values()) >= clips:
+            break
+        out[s] += 1
+    return out
+
+
+def group_into_images(chunks: list[dict], words_per_image: int,
+                      motion_per_section: dict[int, int] | None = None,
+                      motion_words: int = 0) -> list[dict]:
+    """Scenes -> image slots, sized by word count so each picture holds ~evenly.
 
     Grouping is by WORD COUNT, not by time, because no time exists yet. At a
     steady read the two are the same thing; where they differ, the words are what
@@ -86,39 +109,100 @@ def group_into_images(chunks: list[dict], words_per_image: int) -> list[dict]:
 
     A slot never spans a section boundary - sections are recorded as separate
     files, so a picture straddling one would have to be cut across two takes.
+
+    THIS SPLITS LONG SCENES, IT DOES NOT ONLY MERGE SHORT ONES - and that is a
+    fix, not a feature. The original version could only ever group whole scenes,
+    so the picture count was silently capped at the SCENE count. On chin that cap
+    is 114 pictures for a 594s video, which is 5.2s a picture: over the 4s ceiling
+    before a single frame is drawn, and unfixable by any flag. The pacing verdict
+    then reports "too slow" for a reason the operator has no way to act on.
+
+    Cutting inside a sentence is already a supported, deliberate mode - see
+    `imageplan._exact_word_cuts`, which lands those cuts on real Whisper word
+    timestamps rather than interpolating. So the plan is allowed to ask for more
+    pictures than there are scenes, and the build knows what to do with it.
     """
     images: list[dict] = []
     order_in_section: dict[int, int] = {}
 
-    buf: list[int] = []
-    buf_words = 0
-    buf_section: int | None = None
+    motion_per_section = motion_per_section or {}
 
-    def flush():
-        nonlocal buf, buf_words, buf_section
-        if not buf:
-            return
-        order_in_section[buf_section] = order_in_section.get(buf_section, 0) + 1
-        order = order_in_section[buf_section]
+    def emit(section: int, scene_idx: list[int], words: list[str],
+             kind: str = "image") -> None:
+        order_in_section[section] = order_in_section.get(section, 0) + 1
+        order = order_in_section[section]
         images.append({
-            "section": buf_section,
+            "section": section,
             "order": order,
-            "filename": f"{order}section{buf_section}.png",
-            "scene_indices": list(buf),
-            "narration": [chunks[i]["text"] for i in buf],
-            "words": buf_words,
+            "filename": f"{order}section{section}.png",
+            "scene_indices": scene_idx,
+            "narration": [" ".join(words)],
+            "words": len(words),
+            # A motion slot REPLACES a still - it is one of these slots, not an
+            # extra one - so `kind` rides along on the same list rather than
+            # living in a parallel structure that could disagree with it.
+            "kind": kind,
         })
-        buf, buf_words, buf_section = [], 0, None
 
-    for i, c in enumerate(chunks):
-        n = len(c["text"].split())
-        if buf and (c["section"] != buf_section or buf_words + n > words_per_image):
-            flush()
-        if buf_section is None:
-            buf_section = c["section"]
-        buf.append(i)
-        buf_words += n
-    flush()
+    # One section at a time: a picture may never straddle a section boundary.
+    for section in sorted({c["section"] for c in chunks}):
+        idx = [i for i, c in enumerate(chunks) if c["section"] == section]
+
+        # Flatten to a word stream that remembers which scene each word came
+        # from, so a picture that lands mid-sentence still reports the scenes it
+        # overlaps and carries the exact words it has to illustrate.
+        stream: list[tuple[int, str]] = []
+        for i in idx:
+            for w in chunks[i]["text"].split():
+                stream.append((i, w))
+        if not stream:
+            continue
+
+        # THE PLANNER SIZES MOTION SLOTS, THE PROVIDER DOES NOT ADAPT TO THEM.
+        # A Flow clip is a fixed 4.0s, so the slot that carries one has to be
+        # built at that width here - a slot sized for 3.0s of speech cannot be
+        # covered by a 4.0s clip later without slowing or freezing it, and both
+        # are banned. So motion slots are given their own, larger word budget and
+        # the stills divide whatever is left.
+        m = min(motion_per_section.get(section, 0),
+                max(0, len(stream) // max(1, motion_words)))
+        spent = m * motion_words
+        k_still = max(1, round((len(stream) - spent) / words_per_image))
+
+        # Motion is spread through the section rather than bunched: two adjacent
+        # motion slots read as one eight-second shot with a cut buried in it.
+        total = k_still + m
+        motion_at = {round((j + 0.5) * total / m) for j in range(m)} if m else set()
+
+        cursor = 0
+        for j in range(total):
+            is_motion = j in motion_at
+            take = motion_words if is_motion else None
+            if take is None:
+                # Divide the remaining words evenly among the stills that are
+                # left, so a rounding error cannot pile up on the last picture.
+                stills_left = sum(1 for x in range(j, total) if x not in motion_at)
+                motion_left = sum(1 for x in range(j, total) if x in motion_at)
+                remaining = len(stream) - cursor - motion_left * motion_words
+                take = max(1, round(remaining / max(1, stills_left)))
+            piece = stream[cursor:cursor + take]
+            cursor += len(piece)
+            if not piece:
+                continue
+            emit(section,
+                 sorted({i for i, _ in piece}),
+                 [w for _, w in piece],
+                 "video" if is_motion else "image")
+
+        # Anything left over from rounding joins the final picture rather than
+        # becoming a sliver that would flash on screen.
+        if cursor < len(stream) and images:
+            tail = stream[cursor:]
+            last = images[-1]
+            last["narration"] = [last["narration"][0] + " " + " ".join(w for _, w in tail)]
+            last["words"] += len(tail)
+            last["scene_indices"] = sorted(set(last["scene_indices"]) | {i for i, _ in tail})
+
     return images
 
 
@@ -200,6 +284,18 @@ def main() -> None:
                          "Injected into every image prompt so a span that never "
                          "names the subject cannot drift onto another one. "
                          "Defaults to the script's filename")
+    ap.add_argument("--motion-clips", type=int, default=0,
+                    help="how many slots to size for a 4s external video clip. "
+                         "They are spread across sections in proportion to "
+                         "words, and never placed adjacent to each other.")
+    ap.add_argument("--motion-seconds", type=float, default=None,
+                    help="total seconds of motion instead of a clip count, e.g. "
+                         "45 -> 11 clips. Overrides --motion-clips.")
+    ap.add_argument("--refine-from-words", action="store_true",
+                    help="re-cut every slot against the MEASURED word timestamps "
+                         "in build/words.json. Needs the voice stage to have run "
+                         "once. This is what makes motion slots actually land in "
+                         "the 3.5-4.0s window - word counts alone cannot.")
     ap.add_argument("--allow-brackets", action="store_true",
                     help="plan anyway despite bracketed text in the script")
     args = ap.parse_args()
@@ -262,7 +358,19 @@ def main() -> None:
                 "words": len(ch["text"].split()),
             })
     else:
-        images = group_into_images(chunks, words_per_image)
+        # Motion slots are sized HERE, from a clip budget, because a 4.0s Flow
+        # clip cannot be fitted to a slot built for 3.0s of speech afterwards.
+        section_words = {}
+        for c in chunks:
+            section_words[c["section"]] = (section_words.get(c["section"], 0)
+                                           + len(c["text"].split()))
+        clips = args.motion_clips
+        if args.motion_seconds:
+            clips = int(round(args.motion_seconds / pacing.MOTION_CLIP_S))
+        motion_words = max(1, round(args.wpm * pacing.MOTION_CLIP_S / 60.0))
+        per_section = allocate_motion(section_words, clips)
+        images = group_into_images(chunks, words_per_image,
+                                   per_section, motion_words)
 
     work = args.work
     proj.sections.mkdir(parents=True, exist_ok=True)
@@ -295,6 +403,33 @@ def main() -> None:
             for img in images
         ],
     }
+    # SECOND PASS, only when asked and only when there are real timestamps.
+    # Word counts cannot put a motion slot inside the 3.5-4.0s window - delivery
+    # speed varies far more within a section than between sections - so once the
+    # voice stage has run, re-cut against what was actually said. See timeplan.py.
+    if args.refine_from_words:
+        words_file = work / "words.json"
+        if not words_file.exists():
+            raise SystemExit(
+                f"--refine-from-words needs {words_file}. Run the voice stage "
+                f"once first:\n"
+                f"  build_video.py --project {args.project} --stage voice")
+        words = json.loads(words_file.read_text(encoding="utf-8"))
+        rep = timeplan.refine(plan, words, still_target=args.seconds_per_image)
+        for img in plan["images"]:
+            img["path"] = str(args.images_dir / img["filename"])
+        print(f"\n  refined against {len(words)} measured word timestamps")
+        print(f"    {rep['slots']} slots, motion "
+              f"{rep['motion_before']} planned -> {rep['motion_after']} placed")
+        for r in rep["sections"]:
+            if not r.get("refined"):
+                print(f"    section {r['section']}: kept as planned - {r['why']}")
+            elif r["motion_placed"] < r["motion_wanted"]:
+                print(f"    section {r['section']}: {r['motion_placed']} of "
+                      f"{r['motion_wanted']} clip(s) placed - no other stretch "
+                      f"gave a 3.5-4.0s hold")
+        images = plan["images"]
+
     (work / "script_plan.json").write_text(json.dumps(plan, indent=2),
                                             encoding="utf-8")
     (work / "script_plan.md").write_text(

@@ -7,6 +7,7 @@
           sections/                 read sheets, one file per section
           voice_recordings/         section_01.wav ... what you record
           images/                   the pictures, named <order>section<section>
+          motion/                   external Flow clips, one per motion slot
           build/                    everything derived - plan, prompts, timeline
           chin.mp4                  the output
 
@@ -65,6 +66,17 @@ class Project:
     def images(self) -> Path:
         return self.dir / "images"
 
+    @property
+    def motion(self) -> Path:
+        """External video clips (Google Flow), one per motion slot.
+
+        AN INPUT, NOT A DERIVED FOLDER. Nothing in this pipeline generates a
+        clip - it ingests, conforms and trims what you drop here, exactly as it
+        does for images/. So it sits outside build/ and `delete build/ and
+        re-run` must never touch it.
+        """
+        return self.dir / "motion"
+
     # ---- derived (safe to delete) -----------------------------------------
     @property
     def build(self) -> Path:
@@ -91,12 +103,23 @@ class Project:
         return self.build / "render_plan.json"
 
     @property
+    def overrides(self) -> Path:
+        """The timeline editor's only output: roll edits, replaced assets, and
+        motion on/off, keyed by render_plan.json slot index. See
+        studio/backend/overrides.py and imageplan.plan_from_binding's
+        `overrides` param - this file is applied fresh every time the plan is
+        (re)computed, never merged into script_plan.json or the binding
+        itself, so the fingerprint that protects the binding never sees it."""
+        return self.build / "overrides.json"
+
+    @property
     def out(self) -> Path:
         return self.dir / f"{self.topic}.mp4"
 
     # ---- helpers ----------------------------------------------------------
     def make_dirs(self) -> None:
-        for d in (self.sections, self.recordings, self.images, self.build):
+        for d in (self.sections, self.recordings, self.images,
+                  self.motion, self.build):
             d.mkdir(parents=True, exist_ok=True)
 
     @classmethod
@@ -114,6 +137,7 @@ class Project:
         rows = [
             ("script", self.script), ("sections", self.sections),
             ("recordings", self.recordings), ("images", self.images),
+            ("motion", self.motion),
             ("build", self.build), ("output", self.out),
         ]
         w = max(len(n) for n, _ in rows)

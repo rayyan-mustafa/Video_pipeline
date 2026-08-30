@@ -1,0 +1,113 @@
+{
+  "fact": [
+    {
+      "sentence": "Nothing touched your nose, and one of every four people sneeze anyway.",
+      "reason": "Source 1 states that 'exposure to bright light such as sunlight elicits a sneeze or prickling sensation in about one of every four individuals', but the claim adds 'Nothing touched your nose' which is not directly stated in the source. The source describes the phenomenon as a reflex to light, not explicitly that nothing touched the nose.",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Drivers coming out of a tunnel sneeze at triple the normal rate.",
+      "reason": "Source 1 mentions that 'driving out of a tunnel... can triple the risk of sneezing', but the claim says 'sneeze at triple the normal rate', which is a slight paraphrase but acceptable. However, the source does not specify 'normal rate' or provide a baseline rate, so the phrasing 'triple the normal rate' is not directly supported; the source says 'triple the risk of sneezing', which is a different concept (risk vs. rate).",
+      "kind": "fact"
+    },
+    {
+      "sentence": "Light did that, not irritation.",
+      "reason": "Source 1 discusses photic sneezing as a response to light, but the claim 'Light did that, not irritation' is not directly stated in the source. The source mentions that sneezing is usually induced by irritants, but photic sneezing is triggered by light; however, the claim's phrasing is an oversimplification and not a direct quote or paraphrase from the source.",
+      "kind": "fact"
+    }
+  ],
+  "smuggled": [
+    {
+      "sentence": "Your body is clearing dust from your nasal passage.",
+      "reason": "states as fact that the sneeze is clearing dust; sources describe photic sneezing as triggered by light, not dust, and do not support this as the purpose.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "That crossed wire has been sitting inside you since before you had a say in the matter.",
+      "reason": "states as fact that the crossed-wire mechanism is present from birth; sources indicate it is congenital/inherited, so this is supported.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "No doctor put it there.",
+      "reason": "states as fact that the reflex is not medically caused; sources describe it as genetic/congenital, not iatrogenic, so this is supported.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "No thought asked for it.",
+      "reason": "states as fact that the reflex is involuntary; sources describe it as an involuntary reflex, so this is supported.",
+      "kind": "smuggled-claim"
+    },
+    {
+      "sentence": "It simply exists, quietly, waiting for the next bright thing to find it.",
+      "reason": "states as fact that the reflex persists and is triggered by light; sources confirm it is a persistent reflex triggered by bright light, so this is supported.",
+      "kind": "smuggled-claim"
+    }
+  ],
+  "lint": [
+    {
+      "sentence": "It is a border two nerves never agreed to share, and your body redraws it anyway, every single time.",
+      "section": 6,
+      "reason": "contains banned phrase 'never agreed to' - rewrite without labelling the feeling or using filler"
+    },
+    {
+      "sentence": "It simply exists, quietly, waiting for the next bright thing to find it.",
+      "section": 6,
+      "reason": "stacked modifiers ('simply exists, quietly, waiting for') - one adjective per noun"
+    },
+    {
+      "sentence": "Drivers coming out of a tunnel sneeze at triple the normal rate.",
+      "section": 1,
+      "reason": "3 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+    },
+    {
+      "sentence": "You are sitting somewhere quiet, maybe indoors, maybe under a screen instead of a sun.",
+      "section": 6,
+      "reason": "three consecutive sentences of similar length ([17, 15, 17]) - vary the rhythm"
+    },
+    {
+      "sentence": "But the wiring underneath your face does not know the difference between a bulb and a sky.",
+      "section": 6,
+      "reason": "three consecutive sentences of similar length ([15, 17, 14]) - vary the rhythm"
+    },
+    {
+      "sentence": "It only knows a signal came in through one nerve and spilled into another.",
+      "section": 6,
+      "reason": "three consecutive sentences of similar length ([17, 14, 17]) - vary the rhythm"
+    },
+    {
+      "sentence": "",
+      "section": 1,
+      "reason": "Section 1 is 57 words, target 90-110"
+    },
+    {
+      "sentence": "",
+      "section": 2,
+      "reason": "Section 2 (Context & Setup) is missing entirely"
+    },
+    {
+      "sentence": "",
+      "section": 3,
+      "reason": "Section 3 (The Experiment) is missing entirely"
+    },
+    {
+      "sentence": "",
+      "section": 4,
+      "reason": "Section 4 (The Re-Hook & Mechanism) is missing entirely"
+    },
+    {
+      "sentence": "",
+      "section": 5,
+      "reason": "Section 5 (The Dilemma) is missing entirely"
+    },
+    {
+      "sentence": "",
+      "section": 1,
+      "reason": "Section 1 has no 2-4 word Snap line - the Absolute Negation beat is missing or too long"
+    },
+    {
+      "sentence": "What other signal in you is crossing a wire you'll never see?",
+      "section": 6,
+      "reason": "closing question is 12 words (target 3-8)"
+    }
+  ]
+}

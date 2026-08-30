@@ -51,7 +51,7 @@ from collections import Counter
 
 from . import config
 from .brief import Brief
-from .engine import call_model, parse_json_response
+from .engine import call_model_json
 
 # =============================================================================
 #  THE BUDGET
@@ -538,10 +538,8 @@ Flag at most {max_issues} lines, only real ones. Quote each one exactly.
 SCRIPT:
 {body}"""
 
-    result = parse_json_response(
-        call_model(config.MODEL_JUDGE, prompt, system=_JUDGE_SYSTEM,
-                   max_tokens=2500, temperature=0.2)
-    )
+    result = call_model_json(config.MODEL_JUDGE, prompt, system=_JUDGE_SYSTEM,
+                             max_tokens=2500, temperature=0.2)
     issues = result.get("issues", [])
     for i in issues:
         i["kind"] = "voiceprint-judge"

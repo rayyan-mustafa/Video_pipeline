@@ -1,0 +1,97 @@
+[
+  {
+    "sentence": "Picture a hand two hundred thousand years ago, reaching into a river for a fish, or gripping a wet branch after rain.",
+    "section": 5,
+    "reason": "the number 'thousand' does not appear in any fetched source"
+  },
+  {
+    "sentence": "Picture a hand two hundred thousand years ago, reaching into a river for a fish, or gripping a wet branch after rain.",
+    "section": 5,
+    "reason": "the number 'hundred' does not appear in any fetched source"
+  },
+  {
+    "sentence": "In 2011, a researcher named Mark Changizi, working at 2AI Labs in Boise, Idaho, wanted to know if the wrinkles served a purpose.",
+    "section": 3,
+    "reason": "stacked modifiers ('Boise, Idaho, wanted to') - one adjective per noun"
+  },
+  {
+    "sentence": "You're probably dry, indoors, nowhere near a river or a wet branch.",
+    "section": 6,
+    "reason": "stacked modifiers ('probably dry, indoors, nowhere near') - one adjective per noun"
+  },
+  {
+    "sentence": "Soak a numb finger for 30 minutes and nothing happens.",
+    "section": 1,
+    "reason": "13 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+  },
+  {
+    "sentence": "The catch: wrinkling made no difference at all when the marbles were dry.",
+    "section": 3,
+    "reason": "3 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+  },
+  {
+    "sentence": "Underneath the skin, blood vessels are the ones doing the work, tightening and narrowing under a signal from the autonomic nervous system, the same wiring that handles your heartbeat and your sweat glands.",
+    "section": 4,
+    "reason": "3 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+  },
+  {
+    "sentence": "A hand that slips there doesn't get dinner, or does get a broken wrist.",
+    "section": 5,
+    "reason": "10 fact-carrying sentences in a row - break the run with an image or a consequence the viewer can picture"
+  },
+  {
+    "sentence": "And the same reaction shows up in macaques, which raises the question of who else has been quietly doing this too.",
+    "section": 2,
+    "reason": "three consecutive sentences of similar length ([21, 21, 21]) - vary the rhythm"
+  },
+  {
+    "sentence": "So the question stops being \"what does water do to skin\" and becomes \"what is the nervous system doing on purpose.\"",
+    "section": 2,
+    "reason": "three consecutive sentences of similar length ([21, 21, 23]) - vary the rhythm"
+  },
+  {
+    "sentence": "That's the kind of difference a channel of drained water can make against a slick surface.",
+    "section": 3,
+    "reason": "three consecutive sentences of similar length ([16, 16, 13]) - vary the rhythm"
+  },
+  {
+    "sentence": "The reflex that fires in your shower was built for a hand with much higher stakes.",
+    "section": 5,
+    "reason": "three consecutive sentences of similar length ([14, 16, 17]) - vary the rhythm"
+  },
+  {
+    "sentence": "",
+    "section": 1,
+    "reason": "Section 1 is 59 words, target 90-110"
+  },
+  {
+    "sentence": "",
+    "section": 2,
+    "reason": "Section 2 is 118 words, target 200-245"
+  },
+  {
+    "sentence": "",
+    "section": 3,
+    "reason": "Section 3 is 124 words, target 250-300"
+  },
+  {
+    "sentence": "",
+    "section": 4,
+    "reason": "Section 4 is 118 words, target 200-250"
+  },
+  {
+    "sentence": "",
+    "section": 5,
+    "reason": "Section 5 is 196 words, target 280-330"
+  },
+  {
+    "sentence": "",
+    "section": 6,
+    "reason": "Section 6 is 64 words, target 150-185"
+  },
+  {
+    "sentence": "Scientists have known since the 1930s that wrinkling doesn't happen at all if the nerves in your finger are cut.",
+    "section": 1,
+    "reason": "Section 1 sentence is 20 words (max 14) - the hook must stay staccato"
+  }
+]

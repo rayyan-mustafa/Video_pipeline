@@ -167,7 +167,13 @@ assert [i["sentence"] for i in _out] == [
     "Rewritten 0.", "Something else entirely.", "Rewritten 2.", "Rewritten 3."], _out
 ok("apply_fixes: every copy of a duplicated line gets its own rewrite")
 script_mod.call_model = fake_call_model
-script_mod.call_model = fake_call_model
+# engine.call_model too: call_model_json (evidence/factcheck/humanize/packaging/
+# retention's JSON calls) is defined in engine.py and resolves `call_model` as
+# ITS OWN module global, not each importer's separately-patched copy - so the
+# DROP-test override above (which set engine.call_model, not just
+# script_mod.call_model) has to be undone here too, or every call_model_json
+# call for the rest of this file silently gets "#4 | DROP" instead of JSON.
+engine.call_model = fake_call_model
 
 # section rebuild
 rebuilt = script_mod.rewrite_section(tagged, 3, ["too long"], b)

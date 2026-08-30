@@ -10,13 +10,14 @@ verdict from pacing.
 from __future__ import annotations
 
 import importlib.util
+import json
 import re
 from pathlib import Path
 
-from . import paths
+from . import jobs, paths
 
 paths.ensure_importable()
-from pipeline import pacing, scenesplit          # noqa: E402
+from pipeline import config, pacing, scenesplit  # noqa: E402
 
 
 def _plan_script_module():
@@ -49,6 +50,62 @@ def write(proj, text: str) -> dict:
     proj.script.write_text(text.replace("\r\n", "\n").replace("\r", "\n"),
                            encoding="utf-8")
     return analyse(proj)
+
+
+def generate_dir(proj) -> Path:
+    """Where a Generate run's output lands - this project's OWN folder, not the
+    pipeline's shared Drive workdir. run_script.py normally pools every topic
+    into one workdir (see pipeline/paths.py's `workdir()`); pointing --workdir
+    here keeps two projects' generations from clobbering each other's
+    script_tagged.json mid-run."""
+    return proj.dir / "_scriptgen"
+
+
+async def generate(proj) -> jobs.Job:
+    """Start run_script.py as a job: the full AI pipeline - grounding, hook
+    tournament, retention, humanizer, re-grounding - for this project's topic.
+
+    Only the 15-topic bank is supported. run_script.py has curated sources for
+    exactly those keys; a project outside the bank (there shouldn't be one -
+    the Projects page only creates from it) has nowhere to get evidence from.
+    """
+    if proj.topic not in config.TOPICS:
+        raise ValueError(
+            f"{proj.topic!r} is not in the topic bank - run_script.py has no "
+            f"curated sources for it, so it cannot generate a script here.")
+
+    argv = [paths.PYTHON, paths.RUN_SCRIPT,
+            "--topic", proj.topic,
+            "--workdir", str(generate_dir(proj))]
+    return await jobs.registry.start(
+        kind="script", project=f"{proj.channel}/{proj.topic}",
+        argv=argv, cwd=paths.CHANNELS,
+    )
+
+
+def import_generated(proj) -> dict:
+    """Read back a finished Generate run as script.txt-shaped text.
+
+    Rebuilds blank-line section breaks from script_tagged.json's own `section`
+    numbers - vo_raw.txt (run_script.py's other output) is one flattened
+    paragraph with no section boundaries at all, because the read-sheet writer
+    that actually consumes it never needed them back.
+
+    Does NOT write script.txt. The Script page drops this into the textarea
+    same as a paste, so the existing dirty-state banner and Save button are
+    still the thing that commits it - generating is not exempt from the same
+    "review before it invalidates a plan" caution a manual edit gets.
+    """
+    tagged_path = generate_dir(proj) / "script_tagged.json"
+    if not tagged_path.exists():
+        raise FileNotFoundError("no generated script found here yet - run Generate first")
+
+    tagged = json.loads(tagged_path.read_text(encoding="utf-8"))
+    by_section: dict[int, list[str]] = {}
+    for item in tagged:
+        by_section.setdefault(item["section"], []).append(item["sentence"])
+    text = "\n\n".join(" ".join(sents) for _, sents in sorted(by_section.items()))
+    return {"text": text}
 
 
 def analyse(proj, wpm: int = 150) -> dict:
