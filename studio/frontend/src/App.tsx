@@ -14,9 +14,11 @@ import Images from "./pages/Images";
 import Voice from "./pages/Voice";
 import Motion from "./pages/Motion";
 import Timeline from "./pages/Timeline";
+import Package from "./pages/Package";
 import Jobs from "./pages/Jobs";
 
-const PAGES = ["script", "plan", "images", "voice", "motion", "timeline", "jobs"] as const;
+const PAGES = ["script", "plan", "images", "voice", "motion", "timeline",
+               "package", "jobs"] as const;
 type Page = (typeof PAGES)[number];
 
 type Route = { id: string | null; page: Page };
@@ -59,7 +61,8 @@ export default function App() {
 
   const id = route.id;
   const P = { script: Script, plan: Plan, images: Images, voice: Voice,
-              motion: Motion, timeline: Timeline, jobs: Jobs }[route.page];
+              motion: Motion, timeline: Timeline, package: Package,
+              jobs: Jobs }[route.page];
 
   return (
     <div className="shell">
@@ -84,6 +87,8 @@ export default function App() {
                  note={proj?.has_render_plan ? "flow clips" : "needs measured holds"} />
             <Nav id={id} page="timeline" now={route.page} label="Timeline"
                  note={proj?.has_render_plan ? "edit cuts & render" : "needs a plan first"} />
+            <Nav id={id} page="package" now={route.page} label="Package"
+                 note="title · tags · thumbnail prompt" />
             <Nav id={id} page="jobs" now={route.page} label="Jobs" note="running & finished" />
           </>
         )}

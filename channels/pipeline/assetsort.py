@@ -190,22 +190,33 @@ def sort_motion(proj, plan_entries: list[dict], render_plan: list[dict] | None =
     seen: dict[int, dict[int, int]] = {}
 
     def resolve_index(stem: str, sec_hint: int | None) -> int | None:
+        # FAST PATH 1: exact slot index (zero-padded or bare), e.g. "035" or "35".
         num = re.match(r"^0*(\d+)", stem)
-        if not num:
-            return None
-        n = int(num.group(1))
-        if n in valid_index:
-            return n
-        if sec_hint is not None and n in order_by_section.get(sec_hint, {}):
-            return order_by_section[sec_hint][n]
-        # No section hint on a bare video filename - check every section's
-        # order map and only resolve if exactly one section claims this
-        # number, so an accidental cross-section collision is refused rather
-        # than guessed.
-        hits = {sec for sec, m in order_by_section.items() if n in m}
-        if len(hits) == 1:
-            sec = next(iter(hits))
-            return order_by_section[sec][n]
+        if num:
+            n = int(num.group(1))
+            if n in valid_index:
+                return n
+
+        # FAST PATH 2: order-within-section pattern from the image folder,
+        # e.g. "4section1" (order=4, section=1).  This is what Flow export
+        # names look like when the user carries the image filename into the
+        # clip name, so accepting it here saves a rename step.
+        m = SLOT_RE.match(stem)
+        if m:
+            order_n, sec_n = int(m.group(1)), int(m.group(2))
+            if sec_n in order_by_section and order_n in order_by_section[sec_n]:
+                return order_by_section[sec_n][order_n]
+
+        # FALLBACK: bare order number with a section hint or unique-across-video
+        # resolution (the original logic, kept for back-compat with bare names).
+        if num:
+            n = int(num.group(1))
+            if sec_hint is not None and n in order_by_section.get(sec_hint, {}):
+                return order_by_section[sec_hint][n]
+            hits = {sec for sec, m in order_by_section.items() if n in m}
+            if len(hits) == 1:
+                sec = next(iter(hits))
+                return order_by_section[sec][n]
         return None
 
     from_images: list[Path] = []
@@ -227,8 +238,9 @@ def sort_motion(proj, plan_entries: list[dict], render_plan: list[dict] | None =
     for f in unresolved:
         loc = "images" if f.parent == proj.images else "motion"
         rep.unresolved.append(
-            f"{loc}/{f.name} - name matches no known motion slot index or "
-            f"order number, left in place")
+            f"{loc}/{f.name} - name matches no known motion slot. "
+            f"Accepted formats: '{{order}}section{{section}}.mp4' (e.g. 4section1.mp4) "
+            f"or '{{index:03d}}.mp4' (e.g. 035.mp4). Left in place.")
 
     for idx, files in sorted(by_slot.items()):
         files.sort(key=lambda p: p.stat().st_mtime, reverse=True)

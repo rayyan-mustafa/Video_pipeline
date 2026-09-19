@@ -84,6 +84,19 @@ class MotionProvider(Protocol):
         """Everything about this provider's output that is not the slot itself."""
         ...
 
+    def command(self, slot: Slot, out: Path,
+                width: int, height: int, fps: int) -> list[str]:
+        """The exact ffmpeg argv `render` would run. Runs nothing itself.
+
+        SPLIT OUT SO THE RENDER CAN HAPPEN SOMEWHERE ELSE. A remote render
+        (see `pipeline/renderjob.py`) ships these argv lists to a worker rather
+        than shipping the pipeline, which is what keeps the worker unable to
+        drift from this repo: every editorial decision - the move, the frame
+        count, the encode settings - is made HERE by the same code the local
+        render uses, and the worker only executes.
+        """
+        ...
+
     def render(self, slot: Slot, out: Path,
                width: int, height: int, fps: int) -> None:
         ...
@@ -121,13 +134,16 @@ class StillProvider:
     def signature(self, slot: Slot, width: int, height: int, fps: int) -> str:
         return f"{self.name}|{width}x{height}@{fps}"
 
+    def command(self, slot: Slot, out: Path,
+                width: int, height: int, fps: int) -> list[str]:
+        n = motion.frames_for(slot.hold, fps)
+        vf = f"{motion.fit_pad_vf(width, height)},format=yuv420p"
+        return ["ffmpeg", "-y", "-loop", "1", "-i", str(slot.image),
+                "-vf", vf, "-frames:v", str(n), *_encode_args(fps), str(out)]
+
     def render(self, slot: Slot, out: Path,
                width: int, height: int, fps: int) -> None:
-        n = motion.frames_for(slot.hold, fps)
-        vf = (f"scale={width}:{height}:force_original_aspect_ratio=decrease:flags=lanczos,"
-              f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:white,format=yuv420p")
-        _run(["ffmpeg", "-y", "-loop", "1", "-i", str(slot.image),
-              "-vf", vf, "-frames:v", str(n), *_encode_args(fps), str(out)],
+        _run(self.command(slot, out, width, height, fps),
              f"still slot {slot.index}")
 
 
@@ -145,16 +161,20 @@ class KenBurnsProvider:
                 f"{m.px0:.4f}-{m.px1:.4f}|{m.py0:.4f}-{m.py1:.4f}|"
                 f"ss{self.supersample}|{width}x{height}@{fps}")
 
-    def render(self, slot: Slot, out: Path,
-               width: int, height: int, fps: int) -> None:
+    def command(self, slot: Slot, out: Path,
+                width: int, height: int, fps: int) -> list[str]:
         m = motion.move_for(slot.index, slot.hold)
         n = motion.frames_for(slot.hold, fps)
         vf = motion.filter_chain(m, slot.hold, width, height, fps, self.supersample)
         # No -loop: zoompan's d= turns the single input frame into n outputs.
         # Looping as well would queue frames the filter never consumes and the
         # encode would not terminate on some builds.
-        _run(["ffmpeg", "-y", "-i", str(slot.image),
-              "-vf", vf, "-frames:v", str(n), *_encode_args(fps), str(out)],
+        return ["ffmpeg", "-y", "-i", str(slot.image),
+                "-vf", vf, "-frames:v", str(n), *_encode_args(fps), str(out)]
+
+    def render(self, slot: Slot, out: Path,
+               width: int, height: int, fps: int) -> None:
+        _run(self.command(slot, out, width, height, fps),
              f"kenburns slot {slot.index}")
 
 
@@ -214,6 +234,18 @@ class VideoAssetProvider:
             stamp = "missing"
         return f"{self.name}|{stamp}|{width}x{height}@{fps}"
 
+    def command(self, slot: Slot, out: Path,
+                width: int, height: int, fps: int) -> list[str]:
+        src = self.source(slot)
+        want = motion.frames_for(slot.hold, fps)
+        vf = f"{motion.fit_pad_vf(width, height)},fps={fps},format=yuv420p"
+        # -frames:v is what actually trims the tail; -t would land on a
+        # timestamp and could leave the count one frame either side, and
+        # `concat -c copy` has no way to fix drift afterwards.
+        return ["ffmpeg", "-y", "-i", str(src),
+                "-vf", vf, "-frames:v", str(want), "-an",
+                *_encode_args(fps), str(out)]
+
     def render(self, slot: Slot, out: Path,
                width: int, height: int, fps: int) -> None:
         src = self.source(slot)
@@ -231,15 +263,7 @@ class VideoAssetProvider:
                 f"cannot be covered without slowing or freezing it, and both are "
                 f"banned - re-export it at least {slot.hold:.2f}s.")
 
-        vf = (f"scale={width}:{height}:force_original_aspect_ratio=decrease:flags=lanczos,"
-              f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:white,"
-              f"fps={fps},format=yuv420p")
-        # -frames:v is what actually trims the tail; -t would land on a
-        # timestamp and could leave the count one frame either side, and
-        # `concat -c copy` has no way to fix drift afterwards.
-        _run(["ffmpeg", "-y", "-i", str(src),
-              "-vf", vf, "-frames:v", str(want), "-an",
-              *_encode_args(fps), str(out)],
+        _run(self.command(slot, out, width, height, fps),
              f"motion slot {slot.index} ({src.name})")
 
         got = probe_frames(out)
@@ -279,6 +303,10 @@ class MixedProvider:
     def signature(self, slot: Slot, width: int, height: int, fps: int) -> str:
         p = self._for(slot)
         return f"{p.name}|{p.signature(slot, width, height, fps)}"
+
+    def command(self, slot: Slot, out: Path,
+                width: int, height: int, fps: int) -> list[str]:
+        return self._for(slot).command(slot, out, width, height, fps)
 
     def render(self, slot: Slot, out: Path,
                width: int, height: int, fps: int) -> None:
@@ -329,12 +357,17 @@ def concat_clips(clips: list[Path], out: Path, audio: Path | None = None,
         for c in clips:
             f.write(f"file '{c.resolve().as_posix()}'\n")
 
+    _run(concat_command(listing, out, audio), "concat")
+
+
+def concat_command(listing: Path, out: Path, audio: Path | None) -> list[str]:
+    """The join, as argv. Same split as the providers' `command()` - see there."""
     cmd = ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(listing)]
     if audio:
         cmd += ["-i", str(audio), "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
                 "-shortest"]
     cmd += ["-c:v", "copy", "-movflags", "+faststart", str(out)]
-    _run(cmd, "concat")
+    return cmd
 
 
 def probe_duration(path: Path) -> float:

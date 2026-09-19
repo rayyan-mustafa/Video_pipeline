@@ -434,8 +434,7 @@ def mux(plan_entries: list[dict], audio: Path, out: Path, work: Path,
             f.write(f"duration {e['duration']}\n")
         f.write(f"file '{Path(plan_entries[-1]['path']).resolve().as_posix()}'\n")
 
-    vf = (f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
-          f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:white,format=yuv420p")
+    vf = f"{motion.fit_pad_vf(width, height)},format=yuv420p"
 
     # ffmpeg 7 deprecated -vsync for -fps_mode and some builds error on it.
     # Detect rather than guess.

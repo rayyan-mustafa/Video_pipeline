@@ -5,7 +5,7 @@
       "args": [
         "git+https://github.com/googlecolab/colab-mcp"
       ],
-      "timeout": 600000
+      "timeout": 120000
     }
   }
 }

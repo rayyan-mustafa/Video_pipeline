@@ -35,7 +35,18 @@ export default function Voice({ id, refresh }: PageProps) {
       setUseColab((u) => u || s.colab.ok);
     }).catch(setErr);
 
-  useEffect(() => { setSt(null); setJobId(null); load(); }, [id]);
+  useEffect(() => {
+    setSt(null); setJobId(null);
+    load();
+    // SHOW THE LAST ALIGNMENT'S LOG ON ARRIVAL. Same reasoning as the render
+    // panel: a run that failed while the operator was on another page, or
+    // before a reload, otherwise left nothing behind to read.
+    api.jobs(id).then((all) => {
+      const last = all.filter((j) => j.kind === "voice")
+                      .sort((a, b) => b.started - a.started)[0];
+      if (last) setJobId(last.id);
+    }).catch(() => {});
+  }, [id]);
 
   async function act(fn: () => Promise<unknown>) {
     setBusy(true); setErr(null);

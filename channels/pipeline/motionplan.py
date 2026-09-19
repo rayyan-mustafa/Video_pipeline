@@ -64,11 +64,13 @@ class Candidate:
     index: int
     hold: float
     section: int
+    order: int          # position within the section (for the image-folder naming alias)
     filename: str
 
     def as_dict(self) -> dict:
         return {"index": self.index, "hold": round(self.hold, 3),
-                "section": self.section, "filename": self.filename}
+                "section": self.section, "order": self.order,
+                "filename": self.filename}
 
 
 @dataclass
@@ -112,6 +114,7 @@ def candidates(plan: list[dict]) -> list[Candidate]:
                 index=int(item.get("index", len(out))),
                 hold=hold,
                 section=int(item.get("section", 0)),
+                order=int(item.get("order", 0)),
                 filename=Path(str(item.get("path", ""))).name,
             ))
     return out
@@ -197,18 +200,28 @@ def read(proj) -> dict | None:
 def clip_for(proj, index: int, saved: dict | None = None) -> Path | None:
     """The Flow mp4 assigned to a slot, if one has been dropped in.
 
-    A slot may name its clip explicitly (`"clip": "flow_012.mp4"`); otherwise the
-    convention is `motion/<index:03d>.mp4`. Returns None when the file is not
-    there yet, so the UI can show which slots are still waiting on Flow.
+    A slot may name its clip explicitly (`"clip": "flow_012.mp4"`); otherwise
+    two conventions are tried in order:
+      1. `motion/{index:03d}.mp4`                  (the canonical form)
+      2. `motion/{order}section{section}.mp4`       (the image-folder alias)
+    Both are accepted so users can drop in a file named after the seed picture
+    without renaming it first.
+    Returns None when the file is not there yet.
     """
     saved = saved if saved is not None else read(proj)
     named = None
+    slot_order = slot_section = None
     for slot in (saved or {}).get("slots", []):
         if int(slot.get("index", -1)) == index:
             named = slot.get("clip")
+            slot_order = slot.get("order")
+            slot_section = slot.get("section")
             break
 
-    for cand in ([named] if named else []) + [f"{index:03d}.mp4"]:
+    cands = ([named] if named else []) + [f"{index:03d}.mp4"]
+    if slot_order is not None and slot_section is not None:
+        cands.append(f"{slot_order}section{slot_section}.mp4")
+    for cand in cands:
         p = proj.motion / cand
         if p.is_file():
             return p

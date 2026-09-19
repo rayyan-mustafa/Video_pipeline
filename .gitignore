@@ -8,6 +8,8 @@
 *.pem
 secrets/
 credentials/
+# YouTube OAuth client + per-channel refresh tokens (channels/youtube_upload.py)
+.youtube/
 
 # Hardcoded tokens in experimental notebooks
 channels/stickman.ipynb

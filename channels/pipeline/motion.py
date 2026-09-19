@@ -201,6 +201,23 @@ def frames_for(hold: float, fps: int) -> int:
     return max(1, int(round(hold * fps)))
 
 
+def fit_pad_vf(width: int, height: int) -> str:
+    """Scale to fit inside width x height, then pad the remainder with white.
+
+    ONE DEFINITION because three places need the exact same composition and a
+    difference between them is invisible until the render: the still provider,
+    the external-clip provider and `filter_chain`'s own prefix all put the
+    picture into the frame this way, and `concat -c copy` can only join clips
+    that were composed identically.
+
+    NEVER CROPS. `decrease` only ever shrinks to fit, so a source that is not
+    16:9 keeps all of its picture and gains white bars - which is why the move
+    is applied to the PADDED frame and the bars travel with it.
+    """
+    return (f"scale={width}:{height}:force_original_aspect_ratio=decrease:flags=lanczos,"
+            f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:white")
+
+
 def filter_chain(move: Move, hold: float, width: int, height: int,
                  fps: int, supersample: int = SUPERSAMPLE) -> str:
     """The complete -vf that turns one still into one moving clip.
@@ -216,8 +233,7 @@ def filter_chain(move: Move, hold: float, width: int, height: int,
 
     # Fit-and-pad to the supersampled frame first, so the move happens against
     # the final composition rather than against whatever the source aspect was.
-    prefix = (f"scale={sw}:{sh}:force_original_aspect_ratio=decrease:flags=lanczos,"
-              f"pad={sw}:{sh}:(ow-iw)/2:(oh-ih)/2:white")
+    prefix = fit_pad_vf(sw, sh)
 
     if move.is_static:
         # Still a zoompan rather than a plain scale: it is the thing that turns

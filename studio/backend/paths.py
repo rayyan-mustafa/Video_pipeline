@@ -34,9 +34,11 @@ SETTINGS_FILE = STUDIO / "backend" / "settings.json"
 # The CLIs this backend drives. Named rather than string-built at call sites so a
 # rename shows up as an ImportError here instead of a FileNotFoundError at runtime.
 BUILD_VIDEO = CHANNELS / "build_video.py"
+RENDER_REMOTE = CHANNELS / "render_remote.py"
 PLAN_SCRIPT = CHANNELS / "plan_script.py"
 RUN_SCRIPT = CHANNELS / "run_script.py"
 MAKE_PROMPTS = CHANNELS / "make_nb_prompts.py"
+YOUTUBE_PACKAGER = CHANNELS / "youtube_packager.py"
 
 
 def ensure_importable() -> None:

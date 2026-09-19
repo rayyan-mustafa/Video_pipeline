@@ -108,6 +108,7 @@ def save(proj, slots: list[dict] | None = None) -> dict:
             chosen.append(motionplan.Candidate(
                 index=idx, hold=hold,
                 section=int(item.get("section", 0)),
+                order=int(item.get("order", 0)),
                 filename=Path(str(item.get("path", ""))).name))
         chosen.sort(key=lambda c: c.index)
         sel.chosen = chosen

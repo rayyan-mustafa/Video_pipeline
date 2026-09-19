@@ -27,7 +27,7 @@ from . import overrides as overrides_mod
 from . import paths
 
 paths.ensure_importable()
-from pipeline import imageplan, motionplan, pacing        # noqa: E402
+from pipeline import imageplan, motion, motionplan, pacing        # noqa: E402
 
 
 def _load_inputs(proj):
@@ -56,7 +56,7 @@ def _recompute(proj, ovr: dict) -> tuple[list[dict], list[str]]:
     return entries, warnings + attach["warnings"]
 
 
-def _slot_view(e: dict) -> dict:
+def _slot_view(e: dict, position: int) -> dict:
     p = Path(e["path"])
     out = dict(e)
     out["abs_path"] = str(p.resolve())
@@ -65,13 +65,30 @@ def _slot_view(e: dict) -> dict:
     out["fits_motion"] = pacing.fits_motion(float(e["duration"]))
     if e.get("clip_path"):
         out["clip_abs_path"] = str(Path(e["clip_path"]).resolve())
+
+    # THE KEN BURNS MOVE THIS SLOT WILL ACTUALLY GET, so the page's preview can
+    # show the real move rather than a generic drift someone invented in CSS.
+    # Read from pipeline.motion, never re-derived here, for the same reason
+    # attach_kinds is shared with the CLI: two copies of an editorial rule are
+    # two rules. `position` (not e["index"]) is the argument because that is
+    # what build_video's _mux_with_motion passes - it enumerates plan_entries,
+    # so a slot's move follows its PLACE in the sequence, which is what makes
+    # ROTATION never repeat a move back to back.
+    mv = motion.move_for(position, float(e["duration"]))
+    out["move"] = {
+        "name": mv.name, "static": mv.is_static,
+        "z0": round(mv.z0, 5), "z1": round(mv.z1, 5),
+        "px0": round(mv.px0, 5), "px1": round(mv.px1, 5),
+        "py0": round(mv.py0, 5), "py1": round(mv.py1, 5),
+    }
     return out
 
 
 def _empty(proj, why: str) -> dict:
     return {"ready": False, "why": why, "slots": [], "warnings": [],
            "words": [], "overrides": overrides_mod.read(proj),
-           "available_images": [], "available_clips": [], "fingerprint": None}
+           "available_images": [], "unconventional_images": [],
+           "available_clips": [], "fingerprint": None}
 
 
 def read(proj) -> dict:
@@ -89,8 +106,23 @@ def read(proj) -> dict:
              if words_path.exists() else [])
 
     scan = assets_mod.scan(proj)
-    available_images = sorted({im["name"] for im in scan.get("images", [])}
-                              | set(scan.get("alternates", [])))
+    # ONLY UNUSED PICTURES - never every image already occupying a slot.
+    # `scan.images` is the full list the plan already draws from, so unioning
+    # it in just repeated the picker's own "(current)" entry under 130 other
+    # names and buried the one new file someone actually dropped in. Swapping
+    # between two slots that already HAVE pictures is what drag-one-onto-
+    # another is for (see Timeline.tsx's own header); this list is for "here
+    # is something new to put in this slot".
+    available_images = sorted(scan.get("alternates", []))
+    # PICTURES WHOSE NAME MATCHES NO SLOT, offered separately rather than
+    # hidden. `assets.scan` drops these from `alternates` on the grounds that
+    # reference art is not a candidate - true for a folder full of concept
+    # sketches, wrong for the file someone just dropped in to swap into one
+    # slot. An asset override is resolved by NAME with an exists-check (see
+    # imageplan.plan_from_binding and `_validate` below), so any real file in
+    # images/ works; the naming convention only decides what the PLAN picks
+    # automatically, never what an operator may choose by hand.
+    unconventional_images = sorted(scan.get("skipped", []))
     if not scan.get("ok"):
         # Not fatal to the timeline itself - the plan above was already built
         # straight from script_plan.json's own filenames, a separate path from
@@ -109,11 +141,12 @@ def read(proj) -> dict:
     return {
         "ready": True,
         "why": "",
-        "slots": [_slot_view(e) for e in entries],
+        "slots": [_slot_view(e, i) for i, e in enumerate(entries)],
         "warnings": warnings,
         "words": words,
         "overrides": ovr,
         "available_images": available_images,
+        "unconventional_images": unconventional_images,
         "available_clips": available_clips,
         "fingerprint": ovr.get("fingerprint"),
     }

@@ -75,7 +75,8 @@ button:disabled { opacity: .4; cursor: not-allowed; }
 button.primary { background: var(--accent); color: #10131a; border-color: var(--accent); font-weight: 600; }
 button.danger { color: var(--bad); }
 
-select, input[type="text"], input[type="number"], textarea {
+select, input[type="text"], input[type="number"], input[type="password"],
+input[type="datetime-local"], textarea {
   background: var(--bg); color: var(--ink); border: 1px solid var(--line);
   border-radius: 6px; padding: 6px 9px; font-family: inherit; font-size: 13px;
 }
@@ -127,6 +128,31 @@ td.num, th.num { text-align: right; font-family: var(--mono); }
 /* One long horizontally-scrolling strip - a real video is minutes of slots
    at 30px/s, so scrolling inside its own track (never the page) is the only
    way this stays usable. See Timeline.tsx. */
+.tl-preview { margin-top: 10px; }
+.tl-preview-frame {
+  position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000;
+  border-radius: var(--radius); overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+/* The move is applied HERE, to the whole padded frame, not to the picture:
+   ffmpeg pads to 16:9 and then zoompans the padded result, so on a source
+   that is not 16:9 the white bars travel with the move. White, not black,
+   for the same reason - that is the colour ffmpeg's pad= actually fills. */
+.tl-preview-stage {
+  position: absolute; inset: 0; background: #fff;
+  transform-origin: 0 0; will-change: transform;
+}
+.tl-preview-frame img, .tl-preview-frame video {
+  width: 100%; height: 100%; object-fit: contain; display: block;
+}
+.tl-preview-badge {
+  position: absolute; left: 8px; bottom: 8px; font: 11px/1 var(--mono);
+  color: var(--ink); background: rgba(0,0,0,.6); padding: 3px 6px; border-radius: 4px;
+}
+.tl-playhead {
+  position: absolute; top: 0; bottom: 0; width: 1px; background: var(--bad);
+  z-index: 4; pointer-events: none;
+}
 .tl-scroll { overflow-x: auto; overflow-y: hidden; border: 1px solid var(--line);
   border-radius: var(--radius); background: var(--panel); }
 .tl-track { position: relative; height: 96px; }
@@ -138,8 +164,15 @@ td.num, th.num { text-align: right; font-family: var(--mono); }
   background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px;
   cursor: grab; user-select: none;
 }
-.tl-slot img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: .85;
-  border-radius: 3px; pointer-events: none; }
+/* contain, not cover: a slot's box is time-width x fixed-height, not 16:9 -
+   a short accent slot (as little as 1s wide) is far narrower than it is
+   tall, and cover would center-crop the picture down to a sliver that reads
+   as portrait even though the source is 16:9 (see the Images tab, which
+   never crops). White background matches ffmpeg's own pad= colour, so a
+   letterboxed slot looks like what the render will actually produce
+   instead of a lie in either direction. */
+.tl-slot img { width: 100%; height: 100%; object-fit: contain; background: #fff;
+  display: block; opacity: .85; border-radius: 3px; pointer-events: none; }
 .tl-slot.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .tl-slot.motion { border-color: var(--ok); }
 .tl-slot.missing { background: repeating-linear-gradient(45deg, var(--panel-2), var(--panel-2) 6px, #2a1f1f 6px, #2a1f1f 12px); }
@@ -164,3 +197,46 @@ td.num, th.num { text-align: right; font-family: var(--mono); }
 .tl-ruler { position: relative; height: 18px; border-bottom: 1px solid var(--line); }
 .tl-ruler span { position: absolute; top: 2px; font-size: 9px; color: var(--faint); transform: translateX(-50%); }
 .tl-detail { margin-top: 12px; }
+
+/* --------------------------------------------------------------- package */
+/* Read-only copy targets, not inputs. A textarea would invite an edit that
+   cannot be saved anywhere - the values belong to build/package.json. See
+   Package.tsx. Selectable text, so a partial copy by hand still works. */
+.copybox {
+  background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+  padding: 9px 11px; font-family: var(--mono); font-size: 12px; line-height: 1.65;
+  white-space: pre-wrap; word-break: break-word; overflow: auto;
+  user-select: text;
+}
+
+.dl {
+  display: inline-flex; align-items: baseline; gap: 8px;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px;
+  padding: 6px 12px; color: var(--ink); font-size: 13px;
+}
+.dl:hover { border-color: var(--accent); text-decoration: none; }
+.dl small { color: var(--faint); font-size: 11px; }
+
+.thumb-shot {
+  width: 256px; aspect-ratio: 16/9; object-fit: cover; background: #fff;
+  border: 1px solid var(--line); border-radius: 6px; display: block;
+}
+
+.alt-title { padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.alt-title:last-child { border-bottom: 0; }
+
+.srcs { margin: 4px 0 0; padding-left: 18px; font-size: 12px; color: var(--dim); }
+.srcs li { margin: 3px 0; }
+
+/* ---------------------------------------------------------- youtube upload */
+.yt-form { display: grid; grid-template-columns: 110px 1fr; gap: 10px 14px;
+  align-items: center; margin-top: 12px; font-size: 13px; }
+.yt-form > .faint { align-self: start; padding-top: 6px; }
+.yt-titles label { display: flex; gap: 8px; align-items: baseline; padding: 3px 0; cursor: pointer; }
+.yt-video { width: 256px; aspect-ratio: 16/9; background: #000; border-radius: 6px;
+  border: 1px solid var(--line); display: block; }
+.yt-checks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+@media (max-width: 640px) {
+  .yt-form { grid-template-columns: 1fr; }
+  .yt-form > .faint { padding-top: 0; }
+}

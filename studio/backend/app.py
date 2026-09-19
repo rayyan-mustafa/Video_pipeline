@@ -23,8 +23,8 @@ from fastapi import Body, FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 
-from . import (assets, jobs, motionstage, paths, planning, projects, rendering,
-               scripts, settings, timeline, voicestage)
+from . import (assets, jobs, motionstage, packager, paths, planning, projects,
+               rendering, scripts, settings, timeline, voicestage, youtube)
 
 app = FastAPI(title="Video Studio", version="0.1.0")
 
@@ -82,6 +82,12 @@ def api_check_colab(body: dict = Body(default={})) -> dict:
     return settings.check_colab(body.get("url"))
 
 
+@app.post("/api/settings/render-worker/check")
+def api_check_render_worker(body: dict = Body(default={})) -> dict:
+    """The RENDER worker's health - a different runtime from the voice one."""
+    return settings.check_render_worker(body.get("url"))
+
+
 @app.get("/api/topics")
 def api_topics() -> list[dict]:
     """The 15-topic bank, each flagged with whether a project exists for it."""
@@ -131,7 +137,9 @@ SERVABLE_EXTS = {
 
 # Directories whose contents are never the UI's business, even for allowed types
 # (.git holds objects; a venv holds thousands of .txt and .json files).
-BLOCKED_PARTS = {".git", ".venv", "node_modules", "__pycache__"}
+# .youtube holds OAuth refresh tokens - .json, so servable by type, and each
+# one is a password for a YouTube channel.
+BLOCKED_PARTS = {".git", ".venv", "node_modules", "__pycache__", ".youtube"}
 
 
 @app.get("/api/file")
@@ -393,17 +401,122 @@ def api_render_status(channel: str, topic: str) -> dict:
 async def api_run_render(channel: str, topic: str, body: dict = Body(default={})) -> dict:
     proj = _proj(channel, topic)
     pid = f"{channel}/{topic}"
-    if jobs.registry.running(pid, "mux"):
+    # Both targets are a render of the same project, so either one running
+    # blocks the other - two ffmpegs writing one output file is not a thing
+    # the second one would survive.
+    if jobs.registry.running(pid, "mux") or jobs.registry.running(pid, "mux-colab"):
         raise HTTPException(409, "a render is already running for this project")
     try:
         job = await rendering.run(
             proj,
             motion=body.get("motion", "kenburns"),
             only_section=body.get("only_section"),
+            target=body.get("target"),
         )
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
     return job.as_dict()
+
+
+# ---------------------------------------------------------------------------
+#  Package  (YouTube metadata + the thumbnail image prompt)
+# ---------------------------------------------------------------------------
+# The one stage whose output never reaches a render: it is what gets typed into
+# the upload form. See packager.py for why the UI reads package.json rather than
+# the two .txt files it is shown alongside.
+@app.get("/api/projects/{channel}/{topic}/package")
+def api_package(channel: str, topic: str) -> dict:
+    return packager.status(_proj(channel, topic))
+
+
+@app.post("/api/projects/{channel}/{topic}/package")
+async def api_run_package(channel: str, topic: str) -> dict:
+    proj = _proj(channel, topic)
+    pid = f"{channel}/{topic}"
+    if jobs.registry.running(pid, "package"):
+        raise HTTPException(409, "a package run is already in flight for this project")
+
+    state = packager.status(proj)
+    if not state["can_run"]:
+        raise HTTPException(409, state["why"])
+    return (await packager.run(proj)).as_dict()
+
+
+# ---------------------------------------------------------------------------
+#  YouTube upload  (the package, the video and the thumbnail, sent)
+# ---------------------------------------------------------------------------
+# See youtube.py. The connection is per Studio channel, not per project - every
+# wierdbiology topic uploads to the same YouTube channel.
+@app.get("/api/projects/{channel}/{topic}/youtube")
+def api_youtube(channel: str, topic: str) -> dict:
+    return youtube.status(_proj(channel, topic))
+
+
+@app.post("/api/projects/{channel}/{topic}/youtube/thumbnail")
+async def api_youtube_thumbnail(channel: str, topic: str,
+                                files: list[UploadFile] = File(...)) -> dict:
+    if len(files) != 1:
+        raise HTTPException(400, "send exactly one thumbnail image")
+    try:
+        return await youtube.save_thumbnail(_proj(channel, topic), files[0])
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@app.post("/api/youtube/client-secrets")
+async def api_youtube_client_secrets(files: list[UploadFile] = File(...)) -> dict:
+    try:
+        return await youtube.save_client_secrets(files[0])
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@app.post("/api/youtube/{channel}/auth")
+async def api_youtube_auth(channel: str) -> dict:
+    if jobs.registry.running(f"youtube/{channel}", "youtube-auth"):
+        raise HTTPException(409, "a connect is already waiting in your browser")
+    if not youtube.CLIENT_SECRETS.is_file():
+        raise HTTPException(409, "add the Google OAuth client JSON first")
+    return (await youtube.run_auth(channel)).as_dict()
+
+
+@app.post("/api/projects/{channel}/{topic}/youtube/upload")
+async def api_youtube_upload(channel: str, topic: str,
+                             body: dict = Body(default={})) -> dict:
+    proj = _proj(channel, topic)
+    pid = f"{channel}/{topic}"
+    if jobs.registry.running(pid, "youtube-upload"):
+        raise HTTPException(409, "an upload is already running for this project")
+
+    state = youtube.status(proj)
+    if not state["can_upload"]:
+        raise HTTPException(409, "cannot upload yet: " + "; ".join(state["blockers"]))
+    # The CLI refuses too, but only after spawning; saying it here keeps a
+    # stray double-click from looking like a failed job.
+    if state["record"] and not body.get("force"):
+        raise HTTPException(409, f"already uploaded as {state['record'].get('url')}")
+    try:
+        job = await youtube.run_upload(
+            proj,
+            video=body.get("video") or "",
+            title=body.get("title"),
+            privacy=body.get("privacy", "private"),
+            publish_at=body.get("publish_at"),
+            category=str(body.get("category", "27")),
+            synthetic=bool(body.get("synthetic")),
+            force=bool(body.get("force")),
+        )
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    return job.as_dict()
+
+
+@app.post("/api/projects/{channel}/{topic}/youtube/thumbnail/retry")
+async def api_youtube_thumb_retry(channel: str, topic: str) -> dict:
+    proj = _proj(channel, topic)
+    if not youtube.status(proj)["record"]:
+        raise HTTPException(409, "nothing uploaded yet for this project")
+    return (await youtube.run_thumbnail(proj)).as_dict()
 
 
 # ---------------------------------------------------------------------------

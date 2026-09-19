@@ -396,12 +396,65 @@ Also evict the UNet before VAE decode or 16 frames will not fit beside it.
   OK   Phase 4    motionplan.py + VideoAssetProvider. Selection, ingest,
                   validation and concat all verified. NOT yet wired into
                   build_video.py's render path - see "Still open in Phase 4".
-  --   Phase 5    the timeline editor                            <- NEXT
-  --   Phase 6    render + preview — Colab CPU runtime, local as fallback
-  --   Phase 7    AI script generation
+  OK   Phase 5    the timeline editor - roll edits, replace, reorder, motion
+                  toggle, plus a PRE-RENDER preview: the mastered voiceover
+                  played against the slot images, with the real Ken Burns
+                  move animated by the browser and motion slots playing
+                  their actual Flow clip.
+  OK   Phase 6    render + preview - BOTH targets built. Local is
+                  build_video.py --stage mux; remote is render_remote.py ->
+                  studio/colab_render.py over a cloudflared tunnel. The
+                  bundle (pipeline/renderjob.py) carries ffmpeg argv rather
+                  than the pipeline, so the worker holds no editorial
+                  opinion and cannot drift. VERIFIED byte-identical against
+                  a local render of the same plan - but only against a
+                  LOCAL stand-in worker; see "Still open in Phase 6".
+  OK   Phase 7    AI script generation - was ALREADY WIRED, the table
+                  above was stale. run_script.py (sources -> draft -> the
+                  six gates -> packaging) is spawned as a job by
+                  scripts.generate(), and the Script page's "Generate with
+                  AI" button streams its log and imports script_tagged.json
+                  back into the textarea. Guarded to the 15-topic bank,
+                  because that is where the curated sources are.
+  OK   Phase 8    the Package stage - youtube_packager.py spawned as a job
+                  by packager.py, and a Package page that hands over the
+                  four strings the upload form wants (title, description,
+                  comma-separated tags, thumbnail prompt) plus the two .txt
+                  files as downloads. The packager now also writes
+                  build/package.json - the copyable twin of metadata.txt -
+                  so the UI never parses the human-readable file.
   OK   frontend   Vite + React + TS. Projects / Script / Plan / Images /
-                  Voice / Jobs, driven off the 15-topic bank.
+                  Voice / Motion / Timeline / Package / Jobs, driven off the
+                  15-topic bank.
 ```
+
+### Still open in Phase 8
+
+- **The free-model chain is fragile, by nature.** `minimax/minimax-m3:free`
+  was retired mid-project and every packager run 404'd. It is now a list
+  (`FREE_MODELS`) tried in order with the reply parsed leniently — prose
+  preamble, fences and trailing commas are all recovered — but free slugs get
+  withdrawn, gated and rate-limited without notice. When a run falls through
+  the whole chain, re-probe openrouter's free list and reorder it. The
+  alternative is `config.MODEL_WRITER`, which is what config.py already says
+  does packaging, at roughly $0.02 a video.
+
+### Still open in Phase 6
+
+- **The Colab side has never been run on Colab.** `studio/colab_render.py` is
+  written and its executor path is proven, but the proof came from a local
+  stand-in worker speaking the same three endpoints. What that did NOT
+  exercise: the cloudflared tunnel, Colab's own ffmpeg build, `apt-get install
+  ffmpeg` on a cold CPU runtime, the `nvidia-smi` refusal against real hardware,
+  and a ~150 MB upload over a quick tunnel. Run it once and record what breaks.
+- **The upload is unmeasured and is probably the whole cost.** A finger_pruning
+  bundle is 133 stills + 5 clips + a 38 MB wav. If the upload dominates, the
+  fix is to send FLAC instead of WAV (the mux re-encodes to AAC either way, so
+  it is lossless where it matters) - do not guess, measure first.
+- **No resume.** A dropped tunnel mid-render loses the job; the poll loop
+  survives a hiccup but not a dead runtime. The per-slot clip cache that makes
+  a local re-render cheap does not exist on the worker, which starts clean
+  every time.
 
 Commits on branch **`studio-ui`**:
 ```text

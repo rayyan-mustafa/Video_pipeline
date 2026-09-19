@@ -100,7 +100,7 @@ export default function Motion({ id, refresh }: PageProps) {
             <thead>
               <tr>
                 <th className="num">slot</th><th className="num">hold</th><th className="num">section</th>
-                <th>seed picture</th><th>flow clip</th><th></th>
+                <th>seed picture</th><th>name clip as</th><th>flow clip</th><th></th>
               </tr>
             </thead>
             <tbody>
@@ -110,8 +110,14 @@ export default function Motion({ id, refresh }: PageProps) {
                   <td className="num">{s.hold.toFixed(2)}s</td>
                   <td className="num">{s.section}</td>
                   <td className="faint mono">{s.filename}</td>
+                  <td className="mono" style={{ color: "var(--accent)", whiteSpace: "nowrap" }}>
+                    {s.order}section{s.section}.mp4
+                    <span className="faint" style={{ marginLeft: 6 }}>
+                      or {String(s.index).padStart(3, "0")}.mp4
+                    </span>
+                  </td>
                   <td className="mono">
-                    {s.clip ?? <span className="faint">drop {String(s.index).padStart(3, "0")}.mp4</span>}
+                    {s.clip ?? <span className="faint">waiting…</span>}
                   </td>
                   <td>{s.have ? <Pill kind="ok">ready</Pill> : <Pill>waiting</Pill>}</td>
                 </tr>
@@ -128,9 +134,10 @@ export default function Motion({ id, refresh }: PageProps) {
       )}
 
       <h3>Clips</h3>
-      <Drop label={`Drop Flow clips here — name them <slot>.mp4 (e.g. 068.mp4) to auto-assign`}
-            accept="video/*" busy={busy}
-            onFiles={(f) => act(() => api.upload(`/api/projects/${id}/motion/clips`, f))} />
+      <Drop
+        label={`Drop Flow clips here — name them {order}section{section}.mp4 (e.g. 4section1.mp4) or {index:03d}.mp4 (e.g. 068.mp4)`}
+        accept="video/*" busy={busy}
+        onFiles={(f) => act(() => api.upload(`/api/projects/${id}/motion/clips`, f))} />
 
       {slots.filter((s) => s.have).length > 0 && (
         <div className="thumbs" style={{ marginTop: 12 }}>
