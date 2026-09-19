@@ -63,6 +63,10 @@ py -3.12 -m venv .venv
 
 ### 2. Frontend — Studio UI
 
+Dependencies are declared in
+[`studio/frontend/package.json`](studio/frontend/package.json): React 18,
+Vite 5, and TypeScript 5 (dev). Install them with npm:
+
 ```powershell
 cd F:\wierd_bio\studio\frontend
 npm install

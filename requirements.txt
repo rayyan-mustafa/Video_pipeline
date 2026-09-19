@@ -9,6 +9,10 @@
 #
 # vo_coach (voice recording/coaching) has its own, separate venv - see
 # vo_coach/requirements.txt and vo_coach/pyproject.toml.
+#
+# Frontend (Studio UI) dependencies are NOT here - this file is pip-only.
+# They live in studio/frontend/package.json (React, Vite, TypeScript) and
+# install via `npm install` in that directory. See README.md.
 
 # --- Studio backend (FastAPI) ------------------------------------------------
 fastapi>=0.115
